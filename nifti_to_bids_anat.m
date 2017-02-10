@@ -45,5 +45,8 @@ else
         % Copy JSON file
         copyfile(fullfile(subject_dir, [subj_name, '.json']), ...
             fullfile(dest_dir, subj_name, 'anat', [subj_name, '_T1w.json']));
+        
+        % Display status
+        disp(['Copied ', subj_name]);
     end
 end
