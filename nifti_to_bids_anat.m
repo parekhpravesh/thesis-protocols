@@ -46,17 +46,17 @@ else
         
         % Make folders inside dest_dir
         cd(dest_dir);
-        mkdir(subj_name);
-        cd(subj_name);
+        mkdir(['sub-', subj_name]);
+        cd(['sub-', subj_name]);
         mkdir('anat');
         
         % Copy NIfTI file
         copyfile(fullfile(subject_dir, images_T1.name), ...
-            fullfile(dest_dir, subj_name, 'anat', [subj_name, '_T1w.nii']));
+            fullfile(dest_dir, ['sub-', subj_name], 'anat', ['sub-', subj_name, '_T1w.nii']));
         
         % Copy JSON file
         copyfile(fullfile(subject_dir, json_T1.name), ...
-            fullfile(dest_dir, subj_name, 'anat', [subj_name, '_T1w.json']));
+            fullfile(dest_dir, ['sub-', subj_name], 'anat', ['sub-', subj_name, '_T1w.json']));
         
         % Display status
         disp(['Copied ', subj_name]);
