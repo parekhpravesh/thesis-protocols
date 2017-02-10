@@ -14,21 +14,22 @@ function nifti_to_bids_anat(subject_dir, dest_dir)
 %               <some-subj-name>_T1*.nii*
 
 cd(subject_dir);
-list_T1 = dir('*T1*.nii*');
+images_T1 = dir('*T1*.nii*');
+json_T1 = dir('*T1*.json');
 
 % Check if no T1 files are present
-if isempty(list_T1)
+if isempty(images_T1)
     warning([subject_dir, ' does not have any T1w files']);
 else
     % Report if multiple files are present and do nothing
-    if length(list_T1) > 1
-        [~,file_name,~] = fileparts(list_T1.name);
+    if length(images_T1) > 1
+        [~,file_name,~] = fileparts(images_T1.name);
         name = strsplit(file_name, '_');
         subj_name = name{1};
-        warning([subj_name, ' has ', num2str(length(list_T1)), ' T1w files']);
+        warning([subj_name, ' has ', num2str(length(images_T1)), ' T1w files']);
     else
         % Copy T1w file and associated JSON sidecar to dest_dir
-        [~,file_name,~] = fileparts(list_T1.name);
+        [~,file_name,~] = fileparts(images_T1.name);
         name = strsplit(file_name, '_');
         subj_name = name{1};
         
@@ -39,11 +40,11 @@ else
         mkdir('anat');
         
         % Copy NIfTI file
-        copyfile(fullfile(subject_dir, list_T1.name), ...
+        copyfile(fullfile(subject_dir, images_T1.name), ...
             fullfile(dest_dir, subj_name, 'anat', [subj_name, '_T1w.nii']));
         
         % Copy JSON file
-        copyfile(fullfile(subject_dir, [subj_name, '.json']), ...
+        copyfile(fullfile(subject_dir, json_T1.name), ...
             fullfile(dest_dir, subj_name, 'anat', [subj_name, '_T1w.json']));
         
         % Display status
