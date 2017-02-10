@@ -13,21 +13,15 @@ function dicom_to_nifti(source_dir)
 % 
 mricrogl_dir = 'E:\mricrogl';
 
-% Detect number of subjects which is counted as the number of folders at
-% the <source-dir> level
-
-% Removing all files and '.' '..' folders
-source_contents = dir(source_dir);
-check_dir = [source_contents.isdir]';
-check_names = {source_contents(check_dir).name}';
-to_remove = ismember(check_names, {'.', '..'});
-source_contents(to_remove) = [];
+% Getsubject list and paths from create_subj_list
+[subj_names, full_paths] = create_subj_list(source_dir);
 
 % Prepare path names
-num_subjs = length(source_contents);
-input_full_paths = fullfile(source_dir, {source_contents.name})';
-output_full_paths = strcat(fullfile(source_dir, {source_contents.name}, ...
-    {source_contents.name})', '_nifti');
+num_subjs = length(subj_names);
+input_full_paths = full_paths;
+output_full_paths = fullfile(full_paths, strcat(subj_names, '_nifti'));
+logfile_full_paths = fullfile(output_full_paths, strcat(subj_names, ...
+    '_dcm2niix_log.txt'));
 
 % Move to mricrogl_dir
 cd(mricrogl_dir);
@@ -37,8 +31,7 @@ for ns = 1:num_subjs
     mkdir(output_full_paths{ns});
     
     % Open log file for writing output of dcm2niix
-    fid = fopen(fullfile(output_full_paths{ns}, ...
-        strcat(source_contents(ns).name, '_dcm2niix_log.txt')), 'w');
+    fid = fopen(logfile_full_paths{ns}, 'w');
     
     % Create string to be passed to system
     cmd_string = ['dcm2niix -b y -z n -f %f_%p -o "', ...
