@@ -14,8 +14,19 @@ function nifti_to_bids_anat(subject_dir, dest_dir)
 %               <some-subj-name>_T1*.nii*
 
 cd(subject_dir);
-images_T1 = dir('*T1*.nii*');
-json_T1 = dir('*T1*.json');
+
+% Determine file name for the T1 and .json file
+if isunix
+    images_T1 = dir('*T1*.nii*');
+    json_T1 = dir('*T1*.json');
+    if isempty(images_T1)
+        images_T1 = dir('*t1*.nii*');
+        json_T1 = dir('*t1*.json');
+    end
+else
+    images_T1 = dir('*T1*.nii*');
+    json_T1 = dir('*T1*.json');
+end
 
 % Check if no T1 files are present
 if isempty(images_T1)
