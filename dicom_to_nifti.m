@@ -30,13 +30,18 @@ cd(mricrogl_dir);
 fid = fopen(logfile_full_paths, 'w');
 
 % Create string to be passed to system
-cmd_string = ['dcm2niix -b y -z n -f %f_%p -o "', ...
-    output_full_path, '" "', input_full_path, '"'];
-
-% Call dcm2niix and write the output to log file
-[~, log_text] = system(cmd_string);
-fprintf(fid, '%s', log_text);
-fclose(fid);
-
-% Display status
-disp(['Finished converting ', subj_name]);
+if ~isunix
+    cmd_string = ['dcm2niix -b y -z n -f %f_%p -o "', ...
+        output_full_path, '" "', input_full_path, '"'];
+else
+    cmd_string = ['./dcm2niix -b y -z n -f %f_%p -o "', ...
+        output_full_path, '" "', input_full_path, '"'];
+end
+    
+    % Call dcm2niix and write the output to log file
+    [~, log_text] = system(cmd_string);
+    fprintf(fid, '%s', log_text);
+    fclose(fid);
+    
+    % Display status
+    disp(['Finished converting ', subj_name]);
