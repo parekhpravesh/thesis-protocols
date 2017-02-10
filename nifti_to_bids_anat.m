@@ -34,7 +34,7 @@ if isempty(images_T1)
 else
     % Report if multiple files are present and do nothing
     if length(images_T1) > 1
-        [~,file_name,~] = fileparts(images_T1.name);
+        [~,file_name,~] = fileparts(images_T1(1).name);
         name = strsplit(file_name, '_');
         subj_name = name{1};
         warning([subj_name, ' has ', num2str(length(images_T1)), ' T1w files']);
