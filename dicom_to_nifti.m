@@ -18,6 +18,7 @@ mricrogl_dir = 'E:\mricrogl';
 
 % Prepare path names
 num_subjs = length(subj_names);
+disp(['Found ', num2str(num_subjs), ' subjects']);
 input_full_paths = full_paths;
 output_full_paths = fullfile(full_paths, strcat(subj_names, '_nifti'));
 logfile_full_paths = fullfile(output_full_paths, strcat(subj_names, ...
@@ -41,6 +42,9 @@ for ns = 1:num_subjs
     [~, log_text] = system(cmd_string);
     fprintf(fid, '%s', log_text);
     fclose(fid);
+    
+    % Display status
+    disp(['Finished converting ', subj_names{ns}]);
 end
 
 % Return control to source_dir
