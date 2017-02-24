@@ -1,5 +1,8 @@
 function exec_mriqc
 % Executes mriqc and writes the log to a text file
+% Parekh, Pravesh
+% February 14, 2017
+% MBIAL
 
 input_dir = '/run/media/MBIAL/MBIAL_STORAGE/Parekh/mriqc_dst_25Jan2017_BIDS/';
 output_dir = '/run/media/MBIAL/MBIAL_STORAGE/Parekh/mriqc_dst_25Jan2017_BIDS_Output';
