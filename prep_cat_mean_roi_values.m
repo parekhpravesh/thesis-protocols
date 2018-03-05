@@ -35,7 +35,7 @@ disp([num2str(num_files), ' xml files found']);
 
 %% Create batch
 for file = 1:num_files
-    matlabbatch{1}.spm.tools.cat.tools.calcroi.roi_xml{file,1} = {fullfile(in_dir, 'label', list_files(file).name)};
+    matlabbatch{1}.spm.tools.cat.tools.calcroi.roi_xml(file,1) = {fullfile(in_dir, 'label', list_files(file).name)};
 end
 matlabbatch{1}.spm.tools.cat.tools.calcroi.point = '.';
 matlabbatch{1}.spm.tools.cat.tools.calcroi.outdir = {out_dir};

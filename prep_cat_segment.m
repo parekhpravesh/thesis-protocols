@@ -51,7 +51,7 @@ disp([num2str(num_files), ' T1w files found']);
 switch mode
     case 'expert'
         for subj = 1:num_files
-            matlabbatch{1}.spm.tools.cat.estwrite.data{subj,1} = {fullfile(in_dir, list_files(subj).name)};
+            matlabbatch{1}.spm.tools.cat.estwrite.data(subj,1) = {[fullfile(in_dir, list_files(subj).name), ',1']};
         end
         matlabbatch{1}.spm.tools.cat.estwrite.nproc = num_cores;
         matlabbatch{1}.spm.tools.cat.estwrite.opts.tpm = {fullfile(spm_loc, 'tpm', 'TPM.nii')};

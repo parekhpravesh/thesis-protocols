@@ -38,7 +38,7 @@ disp([num2str(num_surfaces), ' found']);
 
 %% Loop over surfaces and prepare batch
 for surface = 1:num_surfaces
-    matlabbatch{1}.spm.tools.cat.stools.surfextract.data_surf{surface,1} = {fullfile(in_dir, 'surf', list_surfaces(surface).name)};
+    matlabbatch{1}.spm.tools.cat.stools.surfextract.data_surf(surface,1) = {fullfile(in_dir, 'surf', list_surfaces(surface).name)};
 end
 matlabbatch{1}.spm.tools.cat.stools.surfextract.GI = 1;
 matlabbatch{1}.spm.tools.cat.stools.surfextract.FD = 1;

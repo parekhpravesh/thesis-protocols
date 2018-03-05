@@ -40,7 +40,7 @@ disp([num2str(num_surfaces), ' thickness surfaces found']);
 
 % Loop over surfaces and prepare batch
 for surface = 1:num_surfaces
-    matlabbatch{1}.spm.tools.cat.stools.surfresamp.data_surf{surface,1} = {fullfile(in_dir, 'surf', list_surfaces(surface).name)};
+    matlabbatch{1}.spm.tools.cat.stools.surfresamp.data_surf(surface,1) = {fullfile(in_dir, 'surf', list_surfaces(surface).name)};
 end
 matlabbatch{1}.spm.tools.cat.stools.surfresamp.merge_hemi = 1;
 matlabbatch{1}.spm.tools.cat.stools.surfresamp.mesh32k = 1;
@@ -60,7 +60,7 @@ disp([num2str(num_surfaces), ' cortical complexity surfaces found']);
 
 % Loop over surfaces and prepare batch
 for surface = 1:num_surfaces
-    matlabbatch{1}.spm.tools.cat.stools.surfresamp.data_surf{surface,1} = {fullfile(in_dir, 'surf', list_surfaces(surface).name)};
+    matlabbatch{1}.spm.tools.cat.stools.surfresamp.data_surf(surface,1) = {fullfile(in_dir, 'surf', list_surfaces(surface).name)};
 end
 matlabbatch{1}.spm.tools.cat.stools.surfresamp.merge_hemi = 1;
 matlabbatch{1}.spm.tools.cat.stools.surfresamp.mesh32k = 1;
@@ -80,7 +80,7 @@ disp([num2str(num_surfaces), ' gyrification surfaces found']);
 
 % Loop over surfaces and prepare batch
 for surface = 1:num_surfaces
-    matlabbatch{1}.spm.tools.cat.stools.surfresamp.data_surf{surface,1} = {fullfile(in_dir, 'surf', list_surfaces(surface).name)};
+    matlabbatch{1}.spm.tools.cat.stools.surfresamp.data_surf(surface,1) = {fullfile(in_dir, 'surf', list_surfaces(surface).name)};
 end
 matlabbatch{1}.spm.tools.cat.stools.surfresamp.merge_hemi = 1;
 matlabbatch{1}.spm.tools.cat.stools.surfresamp.mesh32k = 1;
@@ -100,7 +100,7 @@ disp([num2str(num_surfaces), ' sulcal depth surfaces found']);
 
 % Loop over surfaces and prepare batch
 for surface = 1:num_surfaces
-    matlabbatch{1}.spm.tools.cat.stools.surfresamp.data_surf{surface,1} = {fullfile(in_dir, 'surf', list_surfaces(surface).name)};
+    matlabbatch{1}.spm.tools.cat.stools.surfresamp.data_surf(surface,1) = {fullfile(in_dir, 'surf', list_surfaces(surface).name)};
 end
 matlabbatch{1}.spm.tools.cat.stools.surfresamp.merge_hemi = 1;
 matlabbatch{1}.spm.tools.cat.stools.surfresamp.mesh32k = 1;
