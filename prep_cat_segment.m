@@ -41,7 +41,7 @@ cat_loc         = which('cat12');
 [cat_loc, ~, ~] = fileparts(cat_loc);
 
 %% Process list of subjects
-cd(in_folder);
+cd(in_dir);
 list_files = dir('*T1*.nii');
 num_files  = length(list_files);
 disp([num2str(num_files), ' T1w files found']);
