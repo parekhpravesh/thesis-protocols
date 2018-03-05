@@ -116,7 +116,7 @@ switch mode
         
     case 'regular'
         for subj = 1:num_files
-            matlabbatch{1}.spm.tools.cat.estwrite.data{subj,1} = {fullfile(in_dir, list_files(subj).name)};
+            matlabbatch{1}.spm.tools.cat.estwrite.data(subj,1) = {[fullfile(in_dir, list_files(subj).name), ',1']};
         end
         matlabbatch{1}.spm.tools.cat.estwrite.nproc = num_cores;
         matlabbatch{1}.spm.tools.cat.estwrite.opts.tpm = {fullfile(spm_loc, 'tpm', 'TPM.nii')};
