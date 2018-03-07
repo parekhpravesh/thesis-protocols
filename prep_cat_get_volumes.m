@@ -5,7 +5,9 @@ function prep_cat_get_volumes(in_dir)
 %                   (not the surf directory)
 % 
 %% Output:
-% A batch file named cat_get_volumes_ddmmmyyyy.mat is saved in the in_dir
+% A batch file named cat_get_volumes_ddmmmyyyy.mat is saved in the in_dir;
+% also export a subject list in the order in which xml files were read;
+% this is saved as cat_subjlist_get_volumes_ddmmmyyyy.txt
 %
 %% Author(s):
 % Parekh, Pravesh
@@ -36,3 +38,10 @@ matlabbatch{1}.spm.tools.cat.tools.calcvol.calcvol_name = ['volumes_', datestr(n
 
 %% Save batch
 save(fullfile(in_dir, ['cat_get_volumes', datestr(now, 'ddmmmyyyy'), '.mat']), 'matlabbatch');
+
+%% Save subjlist
+fid = fopen(fullfile(in_dir, ['cat_subjlist_get_volumes_', datestr(now, 'ddmmmyyyy'), '.txt']), 'w');
+for file = 1:num_files
+    fprintf(fid, '%s\r\n', list_files(file).name);
+end
+fclose(fid);
