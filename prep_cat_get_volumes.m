@@ -2,7 +2,7 @@ function prep_cat_get_volumes(in_dir)
 % Function to get TIV, GM, WM, and CSF volumes after segmentation is over
 %% Inputs:
 % in_dir:           fullpath to directory having main cat results folder
-%                   (not the surf directory)
+%                   (not the report directory)
 % 
 %% Output:
 % A batch file named cat_get_volumes_ddmmmyyyy.mat is saved in the in_dir;
