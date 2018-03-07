@@ -77,7 +77,7 @@ switch mode
         matlabbatch{1}.spm.tools.cat.estwrite.extopts.admin.ignoreErrors = 1;
         matlabbatch{1}.spm.tools.cat.estwrite.extopts.admin.verb = 2;
         matlabbatch{1}.spm.tools.cat.estwrite.extopts.admin.print = 2;
-        matlabbatch{1}.spm.tools.cat.estwrite.output.surface = 12;
+        matlabbatch{1}.spm.tools.cat.estwrite.output.surface = 1;
         matlabbatch{1}.spm.tools.cat.estwrite.output.ROImenu.atlases.hammers = 1;
         matlabbatch{1}.spm.tools.cat.estwrite.output.ROImenu.atlases.neuromorphometrics = 1;
         matlabbatch{1}.spm.tools.cat.estwrite.output.ROImenu.atlases.lpba40 = 1;
