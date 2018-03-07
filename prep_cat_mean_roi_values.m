@@ -42,4 +42,4 @@ matlabbatch{1}.spm.tools.cat.tools.calcroi.outdir = {out_dir};
 matlabbatch{1}.spm.tools.cat.tools.calcroi.calcroi_name = 'ROI';
 
 %% Save batch
-save(fullfile(in_dir, ['cat_mean_roi_valuse', datestr(now, 'ddmmmyyyy'), '.mat']), 'matlabbatch');
+save(fullfile(in_dir, ['cat_mean_roi_values', datestr(now, 'ddmmmyyyy'), '.mat']), 'matlabbatch');
