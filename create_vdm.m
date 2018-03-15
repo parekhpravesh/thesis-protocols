@@ -169,11 +169,11 @@ for subj = 1:num_subjs
         echo1	= data_phase1{1,3}{loc_e1};
         echo2   = data_phase2{1,3}{loc_e2};
         
-        % Remove comma and convert to number
+        % Remove comma, convert to number, and change to ms
         echo1   = echo1(1:end-1);
         echo2   = echo2(1:end-1);
-        echo1   = str2double(echo1);
-        echo2   = str2double(echo2);
+        echo1   = str2double(echo1)*1000;
+        echo2   = str2double(echo2)*1000;
         
         % Figure out shorter and longer echos
         if echo1 > echo2
