@@ -74,7 +74,11 @@ for subj = 1:num_subjs
     
     % Retain unique base_names
     list_base_names = unique(list_base_names);
-    length(list_base_names)
+    
+    % Counter and location for base_names skipped
+    skip_base_count = 0;
+    skip_base_loc   = [];
+    
     % Initialize a few list variables
     list_phase1_images = cell(length(list_base_names), 1);
     list_phase2_images = cell(length(list_base_names), 1);
@@ -127,25 +131,30 @@ for subj = 1:num_subjs
                 '...incomplete set of files for ', ...
                 list_base_names{i}, '...skipping']);
             
-            % Add a new line if this is the only fieldmap, else put ...
-            if length(list_base_names) == 1
-                fprintf(fid_summary, '\r\n');
-            else
-                fprintf(fid_summary, '%s', '...');
-            end
+            % Update counter and location of base name to skip
+            skip_base_count = skip_base_count + 1;
+            skip_base_loc(skip_base_count) = i;
+            
+            continue
         end
+            
+        % Add a new line if this is the only fieldmap, else put ...
+        if length(list_base_names) == 1
+            fprintf(fid_summary, '\r\n');
+        else
+            fprintf(fid_summary, '%s', '...');
+        end
+        
     end
     
     % Shrink the size of all list files if any base name was skipped
-    for i = 1:length(list_base_names)
-        if isempty(list_phase1_images{i})
-            list_phase1_images(i)   = [];
-            list_phase2_images(i)   = [];
-            list_phase1_json(i)     = [];
-            list_phase2_json(i)     = [];
-            list_mag1_images(i)     = [];
-            list_mag2_images(i)     = [];
-        end
+    if skip_base_count ~= 0
+        list_phase1_images(skip_base_loc)   = [];
+        list_phase2_images(skip_base_loc)   = [];
+        list_phase1_json(skip_base_loc)     = [];
+        list_phase2_json(skip_base_loc)     = [];
+        list_mag1_images(skip_base_loc)     = [];
+        list_mag2_images(skip_base_loc)     = [];
     end
     
     num_fmaps = length(list_phase1_images);
@@ -247,16 +256,24 @@ for subj = 1:num_subjs
             px_bw           = px_bw(1:end-1);
             px_bw           = str2double(px_bw);
             
+            % Find PhaseEncodingSteps and clean it
+            encode_steps    = strcmpi(data_func_json{1,2}, '"PhaseEncodingSteps"');
+            encode_steps    = data_func_json{1,3}{encode_steps};
+            
+            % Remove comma and convert to number
+            encode_steps    = encode_steps(1:end-1);
+            encode_steps    = str2double(encode_steps);
+            
             % Figure out task_name
             [~, task]       = fileparts(tmp);
             begin_loc       = strfind(task, 'task-')+5;
             end_loc         = strfind(task, '_bold')-1;
             task            = task(begin_loc:end_loc);
             
-            % Assign to variables (EPI readout time = 1/PixelBandwidth*1000)
+            % Assign to variables (EPI readout time = encode_steps * 1/PixelBandwidth*1000)
             task_name{i}    = task;
             intended_for{i} = fullfile(bids_dir, list_subjs(subj).name, tmp);
-            readout_time(i) = 1/px_bw*1000;
+            readout_time(i) = encode_steps * (1/px_bw*1000);
             
             % Close JSON file
             fclose(fid_func_json);
@@ -274,7 +291,7 @@ for subj = 1:num_subjs
             matlabbatch{1}.spm.tools.fieldmap.calculatevdm.subj.data.phasemag.longmag                = {[mag_long_nii,     ',1']};
             matlabbatch{1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.et              = echos;
             matlabbatch{1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.maskbrain       = 0;
-            matlabbatch{1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.blipdir         = -1;
+            matlabbatch{1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.blipdir         = 1;
             matlabbatch{1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.tert            = readout_time(i);
             matlabbatch{1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.epifm           = 0;
             matlabbatch{1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.ajm             = 0;
@@ -300,6 +317,38 @@ for subj = 1:num_subjs
             tmp      = strrep(tmp, '_phase1', '');
             save(fullfile(bids_dir, list_subjs(subj).name, 'fmap', ...
                 ['batch_create_vdm_', task_name{i}, '_', tmp, '.mat']), 'matlabbatch');
+            
+            % Run batch
+            spm_jobman('run', matlabbatch);
+            
+            % Add task name at the end of each created files
+            [~, tmp1] = fileparts(phase_short_nii);
+            [~, tmp2] = fileparts(phase_long_nii);
+            
+            % Adding task name to fpm file
+            movefile(fullfile(bids_dir, list_subjs(subj).name, 'fmap', ...
+                ['fpm_sc', tmp1, '.nii']), ...
+                fullfile(bids_dir, list_subjs(subj).name, 'fmap', ...
+                ['fpm_sc', tmp1, '_', task_name{i}, '.nii']));
+            
+            % Adding task name to sc file (short echo)
+            movefile(fullfile(bids_dir, list_subjs(subj).name, 'fmap', ...
+                ['sc', tmp1, '.nii']), ...
+                fullfile(bids_dir, list_subjs(subj).name, 'fmap', ...
+                ['sc', tmp1, '_', task_name{i}, '.nii']));
+            
+            % Adding task name to sc file (long echo)
+            movefile(fullfile(bids_dir, list_subjs(subj).name, 'fmap', ...
+                ['sc', tmp2, '.nii']), ...
+                fullfile(bids_dir, list_subjs(subj).name, 'fmap', ...
+                ['sc', tmp2, '_', task_name{i}, '.nii']));
+            
+            % Adding task name to vdm file
+            movefile(fullfile(bids_dir, list_subjs(subj).name, 'fmap', ...
+                ['vdm5_sc', tmp1, '.nii']), ...
+                fullfile(bids_dir, list_subjs(subj).name, 'fmap', ...
+                ['vdm5_sc', tmp1, '_', task_name{i}, '.nii']));
+            
             clear matlabbatch
             
             % Update summary
