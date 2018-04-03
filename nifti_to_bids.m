@@ -193,7 +193,7 @@ for subj = 1:num_subjs
                     if ~exist(fullfile(bids_dir, subj_tag, 'dwi'), 'dir')
                         mkdir(fullfile(bids_dir, subj_tag, 'dwi'));
                     end
-                
+                    
                     % Create source file name
                     source_file = fullfile(subj_path, list_nii_files{file});
                     
@@ -314,7 +314,7 @@ for subj = 1:num_subjs
                         
                         % Create destination name
                         dest_file = fullfile(bids_dir, subj_tag, ...
-                            'fmap', [subj_tag, '_acq-', ... 
+                            'fmap', [subj_tag, '_acq-', ...
                             token_task, '_', token_type, token_echo, '.nii']);
                         
                         % Check if destination file already exists
@@ -360,27 +360,73 @@ for subj = 1:num_subjs
                             % Get task name from file name
                             if ~isempty(cell2mat(regexpi(...
                                     list_nii_files(file), 'vft')))
-                                token_task = 'vftmodern';
+                                % Check number of volumes
+                                tmp_vol = spm_vol(list_nii_files{file});
+                                num_vol = size(tmp_vol,1);
+                                if num_vol == 132
+                                    token_task = 'vftmodern';
+                                else
+                                    if num_vol == 108
+                                        token_task = 'vftclassic';
+                                    else
+                                        % Skip this file; update summary
+                                        disp([list_nii_files{file}, ...
+                                            ' : Skipping']);
+                                        fprintf(fid_summary, '%s\r\n',...
+                                            [list_nii_files{file}, ....
+                                            ' : Skipping']);
+                                        continue;
+                                    end
+                                end
+                                
                             else
                                 if ~isempty(cell2mat(regexpi(...
                                         list_nii_files(file), 'pm')))
-                                    token_task = 'pm';
+                                    % Check number of volumes
+                                    tmp_vol = spm_vol(list_nii_files{file});
+                                    num_vol = size(tmp_vol,1);
+                                    if num_vol == 220
+                                        token_task = 'pm';
+                                    else
+                                        % Skip this file; update summary
+                                        disp([list_nii_files{file}, ...
+                                            ' : Skipping']);
+                                        fprintf(fid_summary, '%s\r\n',...
+                                            [list_nii_files{file}, ....
+                                            ' : Skipping']);
+                                        continue;
+                                    end
+                                    
                                 else
                                     if ~isempty(cell2mat(regexpi(...
-                                        list_nii_files(file), 'hamt')))
-                                        token_task = 'hamths';
+                                            list_nii_files(file), 'hamt')))
+                                        % Check number of volumes
+                                        tmp_vol = spm_vol(list_nii_files{file});
+                                        num_vol = size(tmp_vol,1);
+                                        if num_vol == 140
+                                            token_task = 'hamths';
+                                        else
+                                            if num_vol == 210
+                                                token_task = 'hamtsz';
+                                            else
+                                                % Skip this file; update
+                                                % summary
+                                                disp([list_nii_files{file}, ...
+                                                    ' : Skipping']);
+                                                fprintf(fid_summary, '%s\r\n',...
+                                                    [list_nii_files{file}, ....
+                                                    ' : Skipping']);
+                                                continue;
+                                            end
+                                        end
+                                        
                                     else
                                         if ~isempty(cell2mat(regexpi(...
-                                                list_nii_files(file), 'hamtsz')))
-                                            token_task = 'hamtsz';
+                                                list_nii_files(file), ...
+                                                'rest|rsf|dmn')))
+                                            token_task = 'rest';
                                         else
-                                            if ~isempty(cell2mat(regexpi(...
-                                                    list_nii_files(file), ...
-                                                    'rest|rsf|dmn')))
-                                                token_task = 'rest';
-                                            else
-                                                token_task = 'gen';
-                                            end
+                                            token_task = 'gen';
                                         end
                                     end
                                 end
@@ -428,7 +474,7 @@ for subj = 1:num_subjs
                     end
                 end
             end
-                        
+            
             % Create source and dest file names for writing summary
             source_file   = regexprep(list_nii_files{file}, ...
                 {'.json', '.nii', '.bval', '.bvec'}, '');
@@ -445,7 +491,7 @@ for subj = 1:num_subjs
         disp([list_subjs{subj}, '...done!']);
         fprintf(fid_summary, '%s\r\n', [list_subjs{subj}, '...done!']);
     end
-end     
+end
 
 % Close summary file
 fclose(fid_summary);
