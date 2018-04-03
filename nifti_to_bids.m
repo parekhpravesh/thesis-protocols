@@ -142,8 +142,17 @@ for subj = 1:num_subjs
         % Remove in-plane files if present
         list_nii_files(~cellfun(@isempty, regexpi(list_nii_files, 'inplane')))  = [];
         
+        % Get the largest filename among all remaining files and add a few
+        % spaces (for formatting purposes)
+        overall_len = max(cellfun(@length, strrep(list_nii_files, '.nii', '')))+3;
+        
         % Loop over all remaining images
         for file = 1:length(list_nii_files)
+            
+            % Length of this file name
+            curr_len = length(strrep(list_nii_files{file}, '.nii', ''));
+            fmt_len  = overall_len - curr_len;
+            
             %% Check if this file is potentially a T1w file
             if ~isempty(cell2mat(regexpi(list_nii_files(file), {'T1', 'MPR'})))
                 
@@ -223,10 +232,8 @@ for subj = 1:num_subjs
                         % Loop till a suitable new name can be generated
                         count = 1;
                         while 1
-                            dest_file = fullfile(bids_dir, ...
-                                subj_tag, 'dwi', ...
-                                [subj_tag, ...
-                                '_acq-', token_out, '_dwi_', ...
+                            dest_file = fullfile(bids_dir, subj_tag, 'dwi', ...
+                                [subj_tag, '_acq-', token_out, '_dwi_', ...
                                 num2str(count), '.nii']);
                             
                             if ~exist(dest_file, 'file')
@@ -260,10 +267,8 @@ for subj = 1:num_subjs
                     if ~isempty(cell2mat(regexpi(list_nii_files(file), 'fmap')))
                         
                         % Create fmap folder if needed
-                        if ~exist(fullfile(bids_dir, subj_tag,...
-                                'fmap'), 'dir')
-                            mkdir(fullfile(bids_dir, subj_tag,...
-                                'fmap'));
+                        if ~exist(fullfile(bids_dir, subj_tag, 'fmap'), 'dir')
+                            mkdir(fullfile(bids_dir, subj_tag, 'fmap'));
                         end
                         
                         % Create source file name
@@ -297,7 +302,6 @@ for subj = 1:num_subjs
                             end
                         end
                         
-                        
                         % Decide if phase or magnitude
                         if ~isempty(cell2mat(regexpi(list_nii_files(file), 'ph')))
                             token_type = 'phase';
@@ -314,8 +318,8 @@ for subj = 1:num_subjs
                         
                         % Create destination name
                         dest_file = fullfile(bids_dir, subj_tag, ...
-                            'fmap', [subj_tag, '_acq-', ...
-                            token_task, '_', token_type, token_echo, '.nii']);
+                            'fmap', [subj_tag, '_acq-', token_task, ...
+                            '_', token_type, token_echo, '.nii']);
                         
                         % Check if destination file already exists
                         if exist(dest_file, 'file')
@@ -371,10 +375,10 @@ for subj = 1:num_subjs
                                     else
                                         % Skip this file; update summary
                                         disp([list_nii_files{file}, ...
-                                            ' : Skipping']);
+                                            blanks(fmt_len), ' : Skipping']);
                                         fprintf(fid_summary, '%s\r\n',...
                                             [list_nii_files{file}, ....
-                                            ' : Skipping']);
+                                            blanks(fmt_len), ' : Skipping']);
                                         continue;
                                     end
                                 end
@@ -390,10 +394,10 @@ for subj = 1:num_subjs
                                     else
                                         % Skip this file; update summary
                                         disp([list_nii_files{file}, ...
-                                            ' : Skipping']);
+                                            blanks(fmt_len), ' : Skipping']);
                                         fprintf(fid_summary, '%s\r\n',...
                                             [list_nii_files{file}, ....
-                                            ' : Skipping']);
+                                            blanks(fmt_len), ' : Skipping']);
                                         continue;
                                     end
                                     
@@ -412,10 +416,10 @@ for subj = 1:num_subjs
                                                 % Skip this file; update
                                                 % summary
                                                 disp([list_nii_files{file}, ...
-                                                    ' : Skipping']);
+                                                    blanks(fmt_len), ' : Skipping']);
                                                 fprintf(fid_summary, '%s\r\n',...
                                                     [list_nii_files{file}, ....
-                                                    ' : Skipping']);
+                                                    blanks(fmt_len), ' : Skipping']);
                                                 continue;
                                             end
                                         end
@@ -466,9 +470,11 @@ for subj = 1:num_subjs
                             
                         else
                             %% Unsure what to do
-                            disp([list_nii_files{file}, ' : skipped']);
+                            disp([list_nii_files{file}, blanks(fmt_len), ...
+                                ' : skipped']);
                             fprintf(fid_summary, '%s\r\n', ...
-                                [list_nii_files{file}, ' : skipped']);
+                                [list_nii_files{file}, blanks(fmt_len), ...
+                                ' : skipped']);
                             continue
                         end
                     end
@@ -483,8 +489,9 @@ for subj = 1:num_subjs
                 {'.json', '.nii', '.bval', '.bvec'}, '');
             
             % Update summary
-            disp([source_file, ' : ', dest_file]);
-            fprintf(fid_summary, '%s\r\n', [source_file, ' : ', dest_file]);
+            disp([source_file, blanks(fmt_len), ' : ', dest_file]);
+            fprintf(fid_summary, '%s\r\n', [source_file, blanks(fmt_len), ...
+                ' : ', dest_file]);
         end
         
         % Update summary
