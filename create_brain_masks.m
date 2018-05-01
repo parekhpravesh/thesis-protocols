@@ -206,16 +206,16 @@ pos_inf_vol.fname       = 'posterior_inferior_brainmask.nii';
 % Select rows in xyz
 % Left ----------- x <= 0
 % Right ---------- x >  0
-% Anterior ------- y <= 0
-% Posterior ------ y <  0
-% Superior ------- z <= 0
-% Inferior ------- z <  0
-left_select      = mask_xyz(:,1)<=0;
-right_select     = mask_xyz(:,1)> 0;
-anterior_select  = mask_xyz(:,2)<=0;
-posterior_select = mask_xyz(:,2)> 0;
-superior_select  = mask_xyz(:,3)<=0;
-inferior_select  = mask_xyz(:,3)> 0;
+% Anterior ------- y >  0
+% Posterior ------ y <= 0
+% Superior ------- z >  0
+% Inferior ------- z <= 0
+left_select      = mask_xyz(:,1) <= 0;
+right_select     = mask_xyz(:,1) >  0;
+anterior_select  = mask_xyz(:,2) >  0;
+posterior_select = mask_xyz(:,2) <= 0;
+superior_select  = mask_xyz(:,3) >  0;
+inferior_select  = mask_xyz(:,3) <= 0;
 
 % Assign into appropriate matrices 
 left         (left_select                                      ) = 1;
