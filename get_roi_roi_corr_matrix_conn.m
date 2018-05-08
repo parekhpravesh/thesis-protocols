@@ -1,7 +1,8 @@
-function get_roi_roi_corr_matrix_conn(conn_proj_dir)
+function get_roi_roi_corr_matrix_conn(conn_proj_dir, roi_idx)
 % Function to derive ROI-to-ROI matrix from a conn project
-%% Input:
+%% Inputs:
 % conn_proj_dir: full path to a conn project folder
+% roi_idx:       index of ROIs for which to compile connectivity values
 % 
 %% Output:
 % csv file(s) are created in the same location as the project directory
@@ -12,6 +13,9 @@ function get_roi_roi_corr_matrix_conn(conn_proj_dir)
 % subjects, the names of all ROIs, and the correlation coefficient matrix
 % for all the subjects; these file(s) are named the same as the csv file
 %
+% If roi_idx is input, csv file(s) are named
+% task-<task_name>_<condition_number>-<condition_name>_connectivity_matrix_selectROIs_ddmmmyyyy.csv
+% 
 %% Notes:
 % Assumes that analyses have already been run
 % 
@@ -33,6 +37,13 @@ else
             error('Conn project directory found; variable not found');
         end
     end
+end
+
+if ~exist('roi_idx', 'var')
+    select_rois = 0;
+    roi_idx     = 'all';
+else
+    select_rois = 1;
 end
 
 %% Get task_name and figure out which conditions to pick
@@ -94,7 +105,16 @@ end
 load_name = fullfile(conn_proj_dir, 'results', 'firstlevel', 'SBC_01', ...
                     'resultsROI_Subject001_Condition001.mat');
 load(load_name, 'names', 'names2');
-num_sources  = length(names);
+
+% Check if all ROIs are needed, otherwise shrink names and names2
+if select_rois
+    names   = names(roi_idx);
+    names2  = names2(roi_idx);
+else
+    roi_idx = 1:length(names);
+end
+
+num_sources = length(roi_idx);
 corr_matrix = NaN(num_cond, num_subjs, num_sources*(num_sources-1)/2);
 col_names   = cell(num_sources*(num_sources-1)/2,1);
 
@@ -112,6 +132,16 @@ for source = 1:num_sources
         if isempty(dest_name)
             dest_name = names2{dest};
         end
+        
+        % In case the ROI name has "atlas" or "networks", shrink it to "at"
+        % and "net" to prevent column names from being too long
+        source_name = strrep(source_name, 'atlas', 'at');
+        dest_name   = strrep(dest_name,   'atlas', 'at');
+        
+        source_name = strrep(source_name, 'networks', 'net');
+        dest_name   = strrep(dest_name,   'networks', 'net');
+        
+        % Add hyphen between source and destination ROI name
         col_names(spot) = {[source_name, ' - ', dest_name]};
         spot = spot + 1;
     end
@@ -126,10 +156,15 @@ for cond = 1:num_cond
         load_name = fullfile(conn_proj_dir, 'results', 'firstlevel', 'SBC_01', ...
                             ['resultsROI_Subject', num2str(subj,'%03d'), '_', ...
                             'Condition', num2str(cond, '%03d'), '.mat']);
-        load(load_name, 'names', 'names2', 'Z');
+        load(load_name, 'Z');
         
         % Convert back to correlation coefficients
         Z = tanh(Z);
+        
+        % Shrink Z if needed
+        if select_rois
+            Z = Z(roi_idx, roi_idx);
+        end
         
         % Extract correlation values
         spot = 1;
@@ -150,9 +185,15 @@ out_dir = pwd;
 
 for cond = 1:num_cond
     % Create filename for saving
-    fname = fullfile(out_dir, ['task-', task_name, '_', conditions{cond}, ...
-        '-', cond_names{cond}, '_connectivity_matrix_', ...
+    if select_rois
+        fname = fullfile(out_dir, ['task-', task_name, '_', conditions{cond}, ...
+        '-', cond_names{cond}, '_connectivity_matrix_selectROIs_', ...
         datestr(now, 'ddmmmyyyy'), '.csv']);
+    else
+        fname = fullfile(out_dir, ['task-', task_name, '_', conditions{cond}, ...
+            '-', cond_names{cond}, '_connectivity_matrix_', ...
+            datestr(now, 'ddmmmyyyy'), '.csv']);
+    end
     
     % Write column names
     fid = fopen(fname, 'w');
@@ -178,8 +219,14 @@ for cond = 1:num_cond
     fclose(fid);
     
     % Save the condition specific mat file
-    fname = fullfile(out_dir, ['task-', task_name, '_', conditions{cond}, ...
-        '-', cond_names{cond}, '_connectivity_matrix_', ...
-        datestr(now, 'ddmmmyyyy'), '.mat']);
+    if select_rois
+        fname = fullfile(out_dir, ['task-', task_name, '_', conditions{cond}, ...
+            '-', cond_names{cond}, '_connectivity_matrix_', ...
+            datestr(now, 'ddmmmyyyy'), '.mat']);
+    else
+        fname = fullfile(out_dir, ['task-', task_name, '_', conditions{cond}, ...
+            '-', cond_names{cond}, '_connectivity_matrix_selectROIs_', ...
+            datestr(now, 'ddmmmyyyy'), '.mat']);
+    end
     save(fname, 'list_subjs', 'names', 'names2', 'col_names', 'corr_matrix_cond');
 end
