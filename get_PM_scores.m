@@ -26,6 +26,18 @@ function [PM_scores, PM_latencies] = get_PM_scores(filename, show_results)
 % PM_Score:             prospective memory condition score
 % OT_in_PM_Score:       ongoing task in the PM condition score
 % WM_Query_Score:       score for query slide (working memory condition)
+% RT_WMOT_OT:           avarage of absolute differences between latencies 
+%                       of all (OT) trials in working memory condition and 
+%                       all trials in ongoing condition
+% RT_PM_OT:             average of absolute differences between latencies 
+%                       of all PM trials (OT+PM) in prospective memory 
+%                       condition and all trials in ongoing condition
+% WM_OT_Score:          absolute difference in accuracy of all (OT) trials 
+%                       in working memory condition and all trials in 
+%                       ongoing condition
+% PM_OT_Score:          absolute difference in accuracy of all PM trials
+%                       (OT+PM) in prospective memory condition and all 
+%                       trials in ongoing condition
 % 
 % Latency is the reaction time reported by E-Prime. The following is the
 % order of columns for latency variable:
@@ -72,9 +84,10 @@ end
 %% Work on each file
 
 % Initialize
-PM_scores       = cell(num_files,7);
+PM_scores       = cell(num_files,11);
 PM_scores_names = {'file_name', 'BL_Score', 'OT_Score', 'WM_Score', ...
-                   'PM_Score', 'OT_in_PM_Score', 'WM_Query_Score'};
+                   'PM_Score', 'OT_in_PM_Score', 'WM_Query_Score',  ...
+                   'RT_WMOT_OT', 'RT_PM_OT', 'WM_OT_Score', 'PM_OT_Score'};
 PM_latencies    = zeros(40, 5, num_files);
                
 for files = 1:num_files
@@ -136,8 +149,10 @@ for files = 1:num_files
     %% Working on WM condition
     trial_items = strcmpi(data.BlockCondition, 'WMtask');
     
-    % Remove the query slide entries
-    trial_items(~isnan(data.WMQList)) = [];
+    % Remove the query slide entries if Philips data
+    if philips
+        trial_items(~isnan(data.WMQList)) = [];
+    end
     
     trial_resp  = data.probe_RESP(trial_items);
     
@@ -163,13 +178,6 @@ for files = 1:num_files
     % Get correct responses
     corr_resp = data.probe_CRESP(trial_items);
     
-    % Generate warning if any CRESP value is 1; this is relevant in case
-    % there was any experiment version on Siemens Skyra that had the first
-    % button as a response option
-    if ~isempty(nonzeros(corr_resp == 1))
-        warning('CRESP variable has response as 1; please check!');
-    end
-    
     % Apply correction, if needed
     if correct && philips
         % Change the correct response for Block 4, PM condition, 1st PM
@@ -178,10 +186,20 @@ for files = 1:num_files
         corr_resp(32) = 9;
     else
         if correct && ~philips
-            % Change the correct response for Block 4, PM condition, 1st PM
-            % trial i.e. Block 4, PM condition, trial number 2: from '2' to
-            % '1' i.e. left button (overall trial number 32)
-            corr_resp(32) = 1;
+            % Check if the corr_resp values are 1,2,3 or 2,3,4
+            if ~isempty(nonzeros(corr_resp == 1))
+                % correct responses are 1,2,3; change the correct response
+                % for Block 4, PM condition, 1st PM trial, i.e. Block 4, PM
+                % condition, trial number 2: from '2' to '1' i.e. left
+                % button (overall trial number 32)
+                corr_resp(32) = 1;
+            else
+                % correct responses are 2,3,4; change the correct response
+                % for Block 4, PM condition, 1st PM trial, i.e. Block 4, PM
+                % condition, trial number 2: from '3' to '2' i.e. left
+                % button (overall trial number 32)
+                corr_resp(32) = 2;
+            end
         end
     end
     
@@ -198,7 +216,11 @@ for files = 1:num_files
     if philips
         loc = corr_resp ~= 8;
     else
-        loc = corr_resp ~= 3;
+        if ~isempty(nonzeros(corr_resp == 1))
+            loc = corr_resp ~= 2;
+        else
+            loc = corr_resp ~= 3;
+        end
     end
     
     % Subset trial_resp, corr_resp, and PM_latencies
@@ -224,24 +246,44 @@ for files = 1:num_files
     % Block 3 Query correct response: left button   (9)
     % Block 4 Query correct response: middle button (8)
     
-    % Get all WM Query correct responses 
-    loc       = ~isnan(data.TotalQ_CRESP);
-    corr_resp = data.TotalQ_CRESP(loc);
-    
-    % Figure out if correction needs to be made
-    check_date = datetime('30-May-2018');
-    if sess_date <= check_date
-        corr_resp(1) = 9;
-        corr_resp(2) = 7;
-        corr_resp(3) = 9;
+    % If data is Siemens Skyra, return NaNs for WM Query
+    if ~philips
+        PM_scores{files, 7} = NaN;
+    else
+        % Get all WM Query correct responses
+        loc       = ~isnan(data.TotalQ_CRESP);
+        corr_resp = data.TotalQ_CRESP(loc);
+        
+        % Figure out if correction needs to be made
+        check_date = datetime('30-May-2018');
+        if sess_date <= check_date
+            corr_resp(1) = 9;
+            corr_resp(2) = 7;
+            corr_resp(3) = 9;
+        end
+        
+        % Get responses for query slide and convert NaNs to zeros
+        trial_resp = data.TotalQ_RESP(loc);
+        trial_resp(isnan(trial_resp)) = 0;
+        
+        % Check if CRESP and RESP match and score
+        PM_scores{files, 7} = length(nonzeros(corr_resp == trial_resp));
     end
     
-    % Get responses for query slide and convert NaNs to zeros
-    trial_resp = data.TotalQ_RESP(loc);
-    trial_resp(isnan(trial_resp)) = 0;
+    %% Working on average absolute RT differences between OT in WM and OT
+    PM_scores{files, 8} = mean(abs(PM_latencies(:,3,files) - ...
+                                   PM_latencies(:,2,files)));
     
-    % Check if CRESP and RESP match and score
-    PM_scores{files, 7} = length(nonzeros(corr_resp == trial_resp));
+    %% Working on average absolute RT differences between PM+OT (PM) and OT
+    PM_scores{files, 9} = mean(abs(PM_latencies(:,4,files) - ...
+                                   PM_latencies(:,2,files)));
+
+    %% Working on absolute difference between OT in WM and OT
+    PM_scores{files, 10} = abs(PM_scores{files, 4} - PM_scores{files, 3});
+    
+    %% Working on absolute difference between PM+OT (PM) and OT
+    PM_scores{files, 11} = abs(PM_scores{files, 5} - PM_scores{files, 3});
+    
 end
 
 %% Convert results to table
