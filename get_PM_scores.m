@@ -1,15 +1,43 @@
-function PM_scores = get_PM_scores(filename, show_results)
+function [PM_scores, PM_latencies] = get_PM_scores(filename, show_results)
 % Function to read an exported (in Excel format) edat text file and compute
-% performance scores for PM task
+% performance scores and latencies for PM task
 %% Inputs:
-% filename:     cell of name(s) of text file(s) (previously exported in
-%               Excel format from E-DataAid); each row should be a file
-% show_results: whether to show results on the screen (1/0; default 1)
+% filename:             cell containing rows of name(s) of text file(s)
+%                       (previously exported in Excel format from
+%                       E-DataAid)
+% show_results:         whether to show results on the screen (1/0)
 % 
-%% Output:
-% PM_scores:    table containing behavioural performance where each row
-%               has data for a particular subject
-% If show_results == 1, results are also displayed on the screen
+%% Outputs:
+% PM_scores:            table containing behavioural performance where each
+%                       row has data for a particular subject (see Notes)
+% PM_latencies:         2D/3D matrix with columns having latencies and the
+%                       third dimension indexing the filename (see Notes)
+% 
+% If show_results == 1, results are also displayed on the screen; latency
+% results are not displayed to prevent clutter
+% 
+%% Notes:
+% PM scores and PM latency values are organized in columns. The following
+% is the order of columns for scores:
+% file_name:            file name(s)
+% BL_Score:             baseline condition score
+% OT_Score:             ongoing condition score
+% WM_Score:             working memory condition score
+% PM_Score:             prospective memory condition score
+% OT_in_PM_Score:       ongoing task in the PM condition score
+% WM_Query_Score:       score for query slide (working memory condition)
+% 
+% Latency is the reaction time reported by E-Prime. The following is the
+% order of columns for latency variable:
+% BL_latencies:         baseline condition reaction times
+% OT_latencies:         ongoing condition reaction times
+% WM_latencies:         working memmory condition reaction times
+% PM_latencies:         prospective memory condition reaction times
+% OT_in_PM_latencies:   ongoing task in PM ocndition reaction times
+% 
+% OT_in_PM_latencies is padded with NaNs towards the end
+% 
+% MATLAB table loading warnings about variablenames are turned off 
 % 
 %% Default:
 % show_results: 1
@@ -31,12 +59,23 @@ if ~exist('show_results', 'var')
     show_results = 1;
 end
 
+%% Get MATLAB version and suppress warning
+tmp = version('-release');
+tmp(end) = '';
+tmp = str2double(tmp);
+if tmp > 2016
+    warning('OFF', 'MATLAB:table:ModifiedAndSavedVarnames');
+else
+    warning('OFF', 'MATLAB:table:ModifiedVarnames');
+end
+
 %% Work on each file
 
 % Initialize
 PM_scores       = cell(num_files,7);
 PM_scores_names = {'file_name', 'BL_Score', 'OT_Score', 'WM_Score', ...
                    'PM_Score', 'OT_in_PM_Score', 'WM_Query_Score'};
+PM_latencies    = zeros(40, 5, num_files);
                
 for files = 1:num_files
     
@@ -75,6 +114,9 @@ for files = 1:num_files
     % If response was given, it is correct; score it
     PM_scores{files, 2} = length(nonzeros(trial_resp));
     
+    % Get latency values
+    PM_latencies(:, 1, files) = data.probe_RT(trial_items);
+    
     %% Working on OT condition
     trial_items = strcmpi(data.BlockCondition, 'OTtask');
     trial_resp  = data.probe_RESP(trial_items);
@@ -88,8 +130,15 @@ for files = 1:num_files
     % Check if CRESP and RESP match and score
     PM_scores{files, 3} = length(nonzeros(corr_resp == trial_resp));
     
+    % Get latency values
+    PM_latencies(:, 2, files) = data.probe_RT(trial_items);
+    
     %% Working on WM condition
     trial_items = strcmpi(data.BlockCondition, 'WMtask');
+    
+    % Remove the query slide entries
+    trial_items(~isnan(data.WMQList)) = [];
+    
     trial_resp  = data.probe_RESP(trial_items);
     
     % Convert NaN values to zeros
@@ -100,6 +149,9 @@ for files = 1:num_files
     
     % Check if CRESP and RESP match and score
     PM_scores{files, 4} = length(nonzeros(corr_resp == trial_resp));
+    
+    % Get latency values
+    PM_latencies(:, 3, files) = data.probe_RT(trial_items);
     
     %% Working on PM condition
     trial_items = strcmpi(data.BlockCondition, 'PMtask');
@@ -136,6 +188,9 @@ for files = 1:num_files
     % Check if CRESP and RESP match and score
     PM_scores{files, 5} = length(nonzeros(corr_resp == trial_resp));
     
+    % Get latency values
+    PM_latencies(:, 4, files) = data.probe_RT(trial_items);
+    
     %% Working on OT in PM condition
     % PM scores have already been retrieved above and correction applied,
     % if needed; check performance for trials where the CRESP is not the
@@ -146,12 +201,17 @@ for files = 1:num_files
         loc = corr_resp ~= 3;
     end
     
-    % Subset trial_resp and corr_resp
-    trial_resp(~loc) = [];
-    corr_resp(~loc)  = [];
+    % Subset trial_resp, corr_resp, and PM_latencies
+    trial_resp(~loc)  = [];
+    corr_resp(~loc)   = [];
+    tmp_latency       = PM_latencies(:,4,files);
+    tmp_latency(~loc) = [];
     
     % Check if CRESP and RESP match and score
     PM_scores{files, 6} = length(nonzeros(corr_resp == trial_resp));
+    
+    % Get latency values
+    PM_latencies(:, 5, files) = [tmp_latency; NaN(40 - length(tmp_latency),1)];
     
     %% Working on WM Query socre
     % If data is Philips and before 30th May 2018, correct WM Query CRESP;
@@ -192,3 +252,9 @@ if show_results
     disp(PM_scores);
 end
 
+%% Turn warnings back on
+if tmp > 2016
+    warning('ON', 'MATLAB:table:ModifiedAndSavedVarnames');
+else
+    warning('ON', 'MATLAB:table:ModifiedVarnames');
+end
