@@ -38,6 +38,7 @@ function [PM_scores, PM_latencies] = get_PM_scores(filename, show_results)
 % PM_OT_Score:          absolute difference in accuracy of all PM trials
 %                       (OT+PM) in prospective memory condition and all 
 %                       trials in ongoing condition
+% PM_Acc_Score:         prospective memory trial performance 
 % 
 % Latency is the reaction time reported by E-Prime. The following is the
 % order of columns for latency variable:
@@ -84,10 +85,11 @@ end
 %% Work on each file
 
 % Initialize
-PM_scores       = cell(num_files,11);
+PM_scores       = cell(num_files,12);
 PM_scores_names = {'file_name', 'BL_Score', 'OT_Score', 'WM_Score', ...
                    'PM_Score', 'OT_in_PM_Score', 'WM_Query_Score',  ...
-                   'RT_WMOT_OT', 'RT_PM_OT', 'WM_OT_Score', 'PM_OT_Score'};
+                   'RT_WMOT_OT', 'RT_PM_OT', 'WM_OT_Score',         ...
+                   'PM_OT_Score', 'PM_Acc_Score'};
 PM_latencies    = zeros(40, 5, num_files);
                
 for files = 1:num_files
@@ -208,6 +210,20 @@ for files = 1:num_files
     
     % Get latency values
     PM_latencies(:, 4, files) = data.probe_RT(trial_items);
+    
+    %% Working on PM performance
+    % PM scores have already been retrieved above; just pick the
+    % appropriate trials 
+    temp_PM_check          = corr_resp == trial_resp;
+    
+    % If correction needs to be applied, only 11 correct PM trials existed
+    if correct
+        PM_trial_locations = [4, 7, 10, 13, 16, 20, 22, 25, 28, 36, 39];
+    else
+        PM_trial_locations = [4, 7, 10, 13, 16, 20, 22, 25, 28, 32, 36, 39];
+    end
+    
+    PM_scores{files, 12} = sum(temp_PM_check(PM_trial_locations));
     
     %% Working on OT in PM condition
     % PM scores have already been retrieved above and correction applied,
