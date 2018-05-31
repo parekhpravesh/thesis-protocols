@@ -19,38 +19,41 @@ function [PM_scores, PM_latencies] = get_PM_scores(filename, show_results)
 %% Notes:
 % PM scores and PM latency values are organized in columns. The following
 % is the order of columns for scores:
-% file_name:            file name(s)
-% BL_Score:             baseline condition score
-% OT_Score:             ongoing condition score
-% WM_Score:             working memory condition score
-% PM_Score:             prospective memory condition score
-% OT_in_PM_Score:       ongoing task in the PM condition score
-% WM_Query_Score:       score for query slide (working memory condition)
-% RT_WMOT_OT:           avarage of absolute differences between latencies 
-%                       of all (OT) trials in working memory condition and 
-%                       all trials in ongoing condition
-% RT_PM_OT:             average of absolute differences between latencies 
-%                       of all PM trials (OT+PM) in prospective memory 
-%                       condition and all trials in ongoing condition
-% WM_OT_Score:          absolute difference in accuracy of all (OT) trials 
-%                       in working memory condition and all trials in 
-%                       ongoing condition
-% PM_OT_Score:          absolute difference in accuracy of all PM trials
-%                       (OT+PM) in prospective memory condition and all 
-%                       trials in ongoing condition
-% PM_Acc_Score:         prospective memory trial performance 
+% 01) file_name:            file name(s)
+% 02) BL_Score:             baseline condition score
+% 03) OT_Score:             ongoing condition score
+% 04) WM_Score:             working memory condition score
+% 05) PM_Score:             prospective memory condition score
+% 06) OT_in_PM_Score:       ongoing task in the PM condition score
+% 07) WM_Query_Score:       score for query slide (working memory condition)
+% 08) RT_WMOT_OT:           avarage of absolute differences between 
+%                           latencies of all (OT) trials in working memory
+%                           condition and all trials in ongoing condition
+% 09) RT_PM_OT:             average of absolute differences between 
+%                           latencies of all PM trials (OT+PM) in 
+%                           prospective memory condition and all trials in 
+%                           ongoing condition
+% 10) WM_OT_Score:          absolute difference in accuracy of all (OT) 
+%                           trials in working memory condition and all 
+%                           trials in ongoing condition
+% 11) PM_OT_Score:          absolute difference in accuracy of all PM 
+%                           trials (OT+PM) in prospective memory condition 
+%                           and all trials in ongoing condition
+% 12) PM_Acc_Score:         prospective memory trial performance 
 % 
 % Latency is the reaction time reported by E-Prime. The following is the
 % order of columns for latency variable:
-% BL_latencies:         baseline condition reaction times
-% OT_latencies:         ongoing condition reaction times
-% WM_latencies:         working memmory condition reaction times
-% PM_latencies:         prospective memory condition reaction times
-% OT_in_PM_latencies:   ongoing task in PM ocndition reaction times
+% 01) BL_latencies:         baseline condition reaction times
+% 02) OT_latencies:         ongoing condition reaction times
+% 03) WM_latencies:         working memmory condition reaction times
+% 04) PM_latencies:         prospective memory condition reaction times
+% 05) OT_in_PM_latencies:   ongoing task in PM ocndition reaction times
 % 
-% OT_in_PM_latencies is padded with NaNs towards the end
+% latencies are padded with NaNs towards the end
 % 
 % MATLAB table loading warnings about variablenames are turned off 
+% 
+% latency is only calculated for correct trials
 % 
 %% Default:
 % show_results: 1
@@ -129,8 +132,11 @@ for files = 1:num_files
     % If response was given, it is correct; score it
     PM_scores{files, 2} = length(nonzeros(trial_resp));
     
-    % Get latency values
-    PM_latencies(:, 1, files) = data.probe_RT(trial_items);
+    % Get latency values of trials which are correct
+    tmp_RT_data               = data.probe_RT(trial_items);
+    corr_loc                  = trial_resp~=0;
+    PM_latencies(:, 1, files) = [tmp_RT_data(corr_loc); ...
+                                NaN(40 - length(tmp_RT_data(corr_loc)),1)];
     
     %% Working on OT condition
     trial_items = strcmpi(data.BlockCondition, 'OTtask');
@@ -145,8 +151,11 @@ for files = 1:num_files
     % Check if CRESP and RESP match and score
     PM_scores{files, 3} = length(nonzeros(corr_resp == trial_resp));
     
-    % Get latency values
-    PM_latencies(:, 2, files) = data.probe_RT(trial_items);
+    % Get latency values of trials which are correct
+    tmp_RT_data               = data.probe_RT(trial_items);
+    corr_loc                  = corr_resp == trial_resp;
+    PM_latencies(:, 2, files) = [tmp_RT_data(corr_loc);...
+                                NaN(40 - length(tmp_RT_data(corr_loc)),1)];
     
     %% Working on WM condition
     trial_items = strcmpi(data.BlockCondition, 'WMtask');
@@ -167,8 +176,11 @@ for files = 1:num_files
     % Check if CRESP and RESP match and score
     PM_scores{files, 4} = length(nonzeros(corr_resp == trial_resp));
     
-    % Get latency values
-    PM_latencies(:, 3, files) = data.probe_RT(trial_items);
+    % Get latency values of trials which are correct
+    tmp_RT_data               = data.probe_RT(trial_items);
+    corr_loc                  = corr_resp == trial_resp;
+    PM_latencies(:, 3, files) = [tmp_RT_data(corr_loc);...
+                                NaN(40 - length(tmp_RT_data(corr_loc)),1)];
     
     %% Working on PM condition
     trial_items = strcmpi(data.BlockCondition, 'PMtask');
@@ -208,8 +220,11 @@ for files = 1:num_files
     % Check if CRESP and RESP match and score
     PM_scores{files, 5} = length(nonzeros(corr_resp == trial_resp));
     
-    % Get latency values
-    PM_latencies(:, 4, files) = data.probe_RT(trial_items);
+    % Get latency values of trials which are correct
+    tmp_RT_data               = data.probe_RT(trial_items);
+    corr_loc                  = corr_resp == trial_resp;
+    PM_latencies(:, 4, files) = [tmp_RT_data(corr_loc);...
+                                NaN(40 - length(tmp_RT_data(corr_loc)),1)];
     
     %% Working on PM performance
     % PM scores have already been retrieved above; just pick the
@@ -240,10 +255,11 @@ for files = 1:num_files
     end
     
     % Subset trial_resp, corr_resp, and PM_latencies
+    tmp_RT_data       = data.probe_RT(trial_items);
     trial_resp(~loc)  = [];
     corr_resp(~loc)   = [];
-    tmp_latency       = PM_latencies(:,4,files);
-    tmp_latency(~loc) = [];
+    tmp_RT_data(~loc) = [];
+    tmp_latency       = tmp_RT_data(corr_resp == trial_resp);
     
     % Check if CRESP and RESP match and score
     PM_scores{files, 6} = length(nonzeros(corr_resp == trial_resp));
@@ -252,7 +268,7 @@ for files = 1:num_files
     PM_latencies(:, 5, files) = [tmp_latency; NaN(40 - length(tmp_latency),1)];
     
     %% Working on WM Query socre
-    % If data is Philips and before 30th May 2018, correct WM Query CRESP;
+    % If data is Philips and before 31st May 2018, correct WM Query CRESP;
     % the CRESP were incorrectly specified for Philips Current Design
     % response pads for the first three occurrences; the last query slide
     % response was correct because the correct response is the middle
@@ -271,7 +287,7 @@ for files = 1:num_files
         corr_resp = data.TotalQ_CRESP(loc);
         
         % Figure out if correction needs to be made
-        check_date = datetime('30-May-2018');
+        check_date = datetime('31-May-2018');
         if sess_date <= check_date
             corr_resp(1) = 9;
             corr_resp(2) = 7;
