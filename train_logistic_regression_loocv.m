@@ -50,7 +50,7 @@ if ~exist('features', 'var') || isempty(features)
     error('Features should be provided');
 else
     num_features = size(features,2);
-    num_samples  = length(features);
+    num_samples  = size(features,1);
 end
 
 % Validate classes
