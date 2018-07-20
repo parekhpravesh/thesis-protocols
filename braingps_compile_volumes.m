@@ -177,12 +177,12 @@ for gran = 1:granularity_levels
         var_names = strrep(strrep(roi_names{gran}, '/', '_'), ' ', '_');
         
         % Make a table of the results at the granularity level
-        results_gran = array2table(results(:,1:length(roi_names{gran}),gran), ...
+        results_gran_tmp = array2table(results(:,1:length(roi_names{gran}),gran), ...
                             'VariableNames', var_names);
         
         % Add subject name and move it to the first column
-        results_gran.SubjectNames = subj_names;
-        results_gran = movevars(results_gran,'SubjectNames', 'Before', 1);
+        results_gran_tmp.SubjectNames = subj_names;
+        results_gran = [results_gran_tmp.SubjectNames, results_gran_tmp(:,1:end-1)];
         
         % Write file out
         writetable(results_gran, fname);
