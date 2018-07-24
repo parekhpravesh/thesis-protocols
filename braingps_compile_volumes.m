@@ -57,7 +57,7 @@ end
 if ~exist('native_flag', 'var') || isempty(native_flag)
     native_flag = 0;
 else
-    if native_flag ~= 0 || native_flag ~= 1
+    if native_flag ~= 0 && native_flag ~= 1
         error(['Unknown native_flag provided: ', native_flag]);
     end
 end
@@ -66,7 +66,7 @@ end
 if ~exist('append_flag', 'var') || isempty(append_flag)
     append_flag = 1;
 else
-    if append_flag ~= 0 || append_flag ~= 1
+    if append_flag ~= 0 && append_flag ~= 1
         error(['Unknown append_flag provided: ', append_flag]);
     end
 end
