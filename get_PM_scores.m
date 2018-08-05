@@ -38,6 +38,14 @@ function [summary_data, scores, latencies, task_load, ...
 % The input text files should have been exported in Excel format without
 % selecting unicode from E-DataAid
 % 
+% By default all reaction times less than equal to 200 ms are treated as 
+% invalid i.e. the responses corresponding to these RT are set to NaN and 
+% the RT of such trials is set to zero. 
+% 
+% This would increase the number of missed responses for each condition; 
+% to correct for this, the number of responses with timing less than equal 
+% to 200 ms is subtracted from the number of missed responses
+% 
 % The summary_data variable is a table with the following columns:
 % 01) file_name:            file name
 % 02) Score_BL:             BL condition performance
@@ -107,7 +115,7 @@ function [summary_data, scores, latencies, task_load, ...
 % The load is essentially the cumulative sum of numbers for a particular
 % block (WM) or till the PM trial happens (PM)
 %
-% To calculate PM accuracy (PM trials only), two methods are considered:
+% To calculate PM accuracy (PM trials only), three methods are considered:
 % 'precise':                PM trial is considered correct if the middle 
 %                           button is pressed exactly at the trial when the 
 %                           sum becomes 7 or greater than 7
@@ -124,7 +132,9 @@ function [summary_data, scores, latencies, task_load, ...
 %                           irrespective of their value (missing values = 0
 %                           are also counted for calculating mean)
 % 'all_ig_miss':            latency for all trials are considered (missing
-%                           values are not considered for calculating mean)
+%                           values are not considered for calculating mean;
+%                           note that any trial with latency less than 
+%                           200 ms is considered as missing response)
 % 'correct':                only latency for trials with correct responses 
 %                           are considered
 % 
@@ -302,6 +312,33 @@ for files = 1:num_files
     end
     
     %% Gathering raw scores and latency values
+    
+    % Number of trials with RT > 0 ms and <= 200 ms
+    % ---------------------------------------------
+    % BL
+    summary_data{files,24} = length(nonzeros(data.probe_RT > 0 ...
+                                   & data.probe_RT <= 200      ...
+                                   & strcmpi(data.BlockCondition, 'BLTask')));
+    % OT
+    summary_data{files,25} = length(nonzeros(data.probe_RT > 0 ...
+                                   & data.probe_RT <= 200      ...
+                                   & strcmpi(data.BlockCondition, 'OTTask')));
+    % WM
+    summary_data{files,26} = length(nonzeros(data.probe_RT > 0 ...
+                                   & data.probe_RT <= 200      ...
+                                   & strcmpi(data.BlockCondition, 'WMTask')));
+    % PM
+    summary_data{files,27} = length(nonzeros(data.probe_RT > 0 ...
+                                   & data.probe_RT <= 200      ...
+                                   & strcmpi(data.BlockCondition, 'PMTask')));
+                                   
+    % Check for latency values less than equal to 200 ms; if any are 
+    % present mark that response as NaN so that it gets treated as missing
+    % response. Also mark that RT as zero so that it is not counted
+    chk_loc = data.probe_RT < 200;
+    data.probe_RESP(chk_loc) = NaN;
+    data.probe_RT(chk_loc) = 0;
+    
     % Fill in trial numbers
     scores(:,1,files)    = 1:max_trials;
     latencies(:,1,files) = 1:max_trials;
@@ -526,30 +563,34 @@ for files = 1:num_files
     % BL
     summary_data{files,20} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
                                     data.BlockCondition, 'BLTask')))));
+    % Correct for trials with RT > 0 and < = 200 ms
+    if summary_data{files,24} > 0
+        summary_data{files,20} = summary_data{files,20}-summary_data{files,24};
+    end
+    
     % OT
     summary_data{files,21} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
                                     data.BlockCondition, 'OTTask')))));
+    % Correct for trials with RT > 0 and < = 200 ms
+    if summary_data{files,25} > 0
+        summary_data{files,21} = summary_data{files,21}-summary_data{files,25};
+    end
+    
     % WM
     summary_data{files,22} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
                                     data.BlockCondition, 'WMTask')))));
+    % Correct for trials with RT > 0 and < = 200 ms
+    if summary_data{files,26} > 0
+        summary_data{files,22} = summary_data{files,22}-summary_data{files,26};
+    end
+    
     % PM
     summary_data{files,23} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
                                     data.BlockCondition, 'PMTask')))));
-                                
-    % Number of trials with RT > 0 ms and <= 200 ms
-    % ---------------------------------------------
-    % BL
-    summary_data{files,24} = length(nonzeros(latencies(:,2,files)>0 ...
-                                   & latencies(:,2,files) <= 200));
-    % OT
-    summary_data{files,25} = length(nonzeros(latencies(:,3,files)>0 ...
-                                   & latencies(:,3,files) <= 200));
-    % WM
-    summary_data{files,26} = length(nonzeros(latencies(:,4,files)>0 ...
-                                   & latencies(:,4,files) <= 200));
-    % PM
-    summary_data{files,27} = length(nonzeros(latencies(:,5,files)>0 ...
-                                   & latencies(:,5,files) <= 200));
+    % Correct for trials with RT > 0 and < = 200 ms
+    if summary_data{files,27} > 0
+        summary_data{files,23} = summary_data{files,23}-summary_data{files,27};
+    end
 
     % Number of trials leading to negative values
     % -------------------------------------------
