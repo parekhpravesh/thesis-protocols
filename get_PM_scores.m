@@ -115,7 +115,7 @@ function [summary_data, scores, latencies, task_load, ...
 % The load is essentially the cumulative sum of numbers for a particular
 % block (WM) or till the PM trial happens (PM)
 %
-% To calculate PM accuracy (PM trials only), three methods are considered:
+% To calculate PM accuracy (PM trials only), two methods are considered:
 % 'precise':                PM trial is considered correct if the middle 
 %                           button is pressed exactly at the trial when the 
 %                           sum becomes 7 or greater than 7
