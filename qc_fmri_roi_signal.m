@@ -19,7 +19,7 @@ function qc_fmri_roi_signal(data_dir, roi_dir, task_name, summary_measure, ...
 %                   files should be present in subject directory (in the
 %                   anat folder if full_bids, otherwise in the same folder
 %                   as the functional files)
-% mask_gm_prob:     probability value at which subject specific GM mask is
+% mask_prob:    	probability value at which subject specific GM mask is
 %                   thresholded before applying to ROI file
 % smoothed:         yes/no to indicate if signal should be extracted from
 %                   smoothed normalized file or just normalized file
