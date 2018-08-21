@@ -125,9 +125,13 @@ else
     end
 end
 
-% Check mask_gm_prob
-if ~exist('mask_gm_prob', 'var') || isempty(mask_prob)
+% Check mask_prob
+if ~exist('mask_prob', 'var') || isempty(mask_prob)
     mask_prob = 0.2;
+else
+    if mask_prob < 0 || mask_prob > 1
+        error('mask_prob value should be between 0 and 1');
+    end
 end
 
 % Check smoothed
@@ -322,12 +326,12 @@ for sub = 1:num_subjs
             
             % Save binarized GM segmentation file
             header.fname = fullfile(qc_dir, [list_subjs(sub).name, ...
-                                    '-GM_mask_', num2str(mask_prob), '.nii']);
+                                    '-GM_mask_', num2str(mask_prob, '%0.2f'), '.nii']);
             spm_write_vol(header, gm_data);
             
             % Get voxel count for GM mask
             roi_vox_count{1,1}  = [list_subjs(sub).name, '-GM_mask_', ...
-                                  num2str(mask_prob)];
+                                  num2str(mask_prob, '%0.2f')];
             roi_vox_count{1,2}  = length(nonzeros(gm_data(:)));
         end
         
@@ -337,7 +341,7 @@ for sub = 1:num_subjs
             if mask_gm
                 header.fname = fullfile(qc_dir, [list_subjs(sub).name, '-', ...
                                         strrep(list_rois(rois).name, '.nii', ''), ...
-                                        '_', num2str(mask_prob), '.nii']);
+                                        '_', num2str(mask_prob, '%0.2f'), '.nii']);
                                 
                 sub_roi_data(:,:,:,rois)   = roi_data(:,:,:,rois).*gm_data;
                 list_sub_roi_files{rois,1} = header.fname;
