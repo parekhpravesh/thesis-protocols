@@ -166,6 +166,11 @@ for sub = 1:num_subjs
             target_loc   = setdiff(1:num_sub_rois, ref_loc);
             target_names = target_rois(target_loc);
             
+            % Restore target_names to original name if mask_gm
+            if mask_gm
+                target_names = strcat(target_names, ['_', num2str(mask_prob, '%0.2f')]);
+            end
+            
             % Calculate percentage difference between regional time series
             % and reference time series and compute descriptive statistics
             percent_diff = ((time_series(:,ref_loc) - ...
