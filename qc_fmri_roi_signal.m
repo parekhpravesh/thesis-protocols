@@ -1,5 +1,5 @@
 function qc_fmri_roi_signal(data_dir, roi_dir, task_name, summary_measure, ...
-                            mask_gm, mask_prob, smoothed, full_bids)
+                            mask_gm, mask_prob, smoothed, full_bids, clean)
 % Function to extract and plot summary time series from a set of regions of
 % interest for quality check
 %% Inputs:
@@ -26,6 +26,8 @@ function qc_fmri_roi_signal(data_dir, roi_dir, task_name, summary_measure, ...
 % full_bids:        yes/no to indicate if the data_dir is a full BIDS style
 %                   folder (i.e. it has anat and func sub-folders) or all 
 %                   files are present in a single folder (see Notes)
+% clean:            yes/no to indicate if the saved subject specific ROI
+%                   files should be deleted or retained afterwards
 % 
 %% Outputs:
 % A folder named 'quality_check_<task_name>' is created in each sub-* 
@@ -63,6 +65,9 @@ function qc_fmri_roi_signal(data_dir, roi_dir, task_name, summary_measure, ...
 % from colorbrewer2 (http://colorbrewer2.org) qualitative series; 
 % in other cases, colour scheme is left to MATLAB
 % 
+% If clean is specified, all NIfTI files present in the subject's
+% quality_check_<task_name> folder will be deleted
+% 
 % Requires REX from Conn toolbox
 %
 %% Defaults:
@@ -71,6 +76,7 @@ function qc_fmri_roi_signal(data_dir, roi_dir, task_name, summary_measure, ...
 % mask_gm_prob:     0.2
 % smoothed:         'no'
 % full_bids:        'yes'
+% clean:            'no'
 %
 %% Author(s)
 % Parekh, Pravesh
@@ -160,6 +166,21 @@ else
             full_bids = 0;
         else
             error(['Invalid full_bids value specified: ', full_bids]);
+        end
+    end
+end
+
+% Check clean
+if ~exist('clean', 'var') || isempty(clean)
+    clean = 0;
+else
+    if strcmpi(clean, 'yes')
+        clean = 1;
+    else
+        if strcmpi(clean, 'no')
+            clean = 0;
+        else
+            error(['Invalid clean value specified: ', clean]);
         end
     end
 end
@@ -404,6 +425,15 @@ for sub = 1:num_subjs
          print(fig, fullfile(qc_dir, [list_subjs(sub).name, '_', task_name, ...
                              '_TimeSeries.png']), '-dpng', '-r600');
          close(fig);
+         
+         % Remove subject level ROI files created if user wants
+         if clean
+             cd(qc_dir);
+             list_files = dir('*.nii');
+             for file = 1:length(list_files)
+                 delete(list_files(file).name);
+             end
+         end
         
         % Clear some variables to prevent any conflicts
         clear list_func_files idx files vol skip func_files sub_roi_data ...
