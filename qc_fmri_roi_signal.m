@@ -1,4 +1,4 @@
-function qc_fmri_roi_signal(data_dir, roi_dir, func_name, summary_measure, ...
+function qc_fmri_roi_signal(data_dir, roi_dir, task_name, summary_measure, ...
                             mask_gm, mask_prob, smoothed, full_bids)
 % Function to extract and plot summary time series from a set of regions of
 % interest for quality check
@@ -7,8 +7,8 @@ function qc_fmri_roi_signal(data_dir, roi_dir, func_name, summary_measure, ...
 %                   style; see Notes for how functional files are detected)
 % roi_dir:          full path to a directory having binary regions of
 %                   interest file (.nii)
-% func_name:        cell type indicating the functional file name pattern
-%                   for which QC is being performed
+% task_name:        functional file name pattern for which QC is being 
+%                   performed (example: 'rest')
 % summary_measure:  measure to be used for extracting time series using
 %                   REX; can be one of the following:
 %                       * 'mean'
@@ -28,11 +28,11 @@ function qc_fmri_roi_signal(data_dir, roi_dir, func_name, summary_measure, ...
 %                   files are present in a single folder (see Notes)
 % 
 %% Outputs:
-% A folder named 'quality_check' is created in each sub-* folder inside
-% data_dir. If full_bids is specified, quality_check is made inside the 
-% func folder. Inside this folder, signal profiles are stored as graphs and
-% mat files. A csv file having voxel count for subject specific ROI is
-% also written out.
+% A folder named 'quality_check_<task_name>' is created in each sub-* 
+% folder inside data_dir. If full_bids is specified, quality_check is made 
+% inside the func folder. Inside this folder, signal profiles are stored 
+% as graphs and mat files. A csv file having voxel count for subject 
+% specific ROI is also written out.
 %
 %% Notes:
 % Within a subject sub- folder, a search is made for smoothed normalized
@@ -42,7 +42,7 @@ function qc_fmri_roi_signal(data_dir, roi_dir, func_name, summary_measure, ...
 % not be in alignment with each other)
 %
 % Only a single functional file per subject is worked on. If multiple files
-% matching the func_name pattern is found, a warning is displayed and the
+% matching the task_name pattern is found, a warning is displayed and the
 % subject is skipped
 %
 % If normalized GM segmentation files' (wc1*.nii) dimension does not match
@@ -96,9 +96,9 @@ else
     end
 end
 
-% Check func_name
-if ~exist('func_name', 'var') || isempty(func_name)
-    error('func_name needs to be given');
+% Check task_name
+if ~exist('task_name', 'var') || isempty(task_name)
+    error('task_name needs to be given');
 end
 
 % Check summary_measure
@@ -210,11 +210,11 @@ for sub = 1:num_subjs
     end
     
     % List smoothed normalized unwarped or normalized unwarped files which
-    % match the func_name pattern
+    % match the task_name pattern
     if smoothed
-        list_func_files = dir(['swu*', func_name, '*.nii']);
+        list_func_files = dir(['swu*', task_name, '*.nii']);
     else
-        list_func_files = dir(['wu*', func_name, '*.nii']);
+        list_func_files = dir(['wu*', task_name, '*.nii']);
     end
     
     % Remove any files which got listed and are not 4D files
@@ -245,14 +245,14 @@ for sub = 1:num_subjs
         
         % Make quality_check folder for this subject
         if full_bids
-            qc_dir = fullfile(data_dir, list_subjs(sub).name, 'func', 'quality_check');
-            if ~exist(fullfile(data_dir, list_subjs(sub).name, 'func', 'quality_check'), 'dir')
-                mkdir(fullfile(data_dir, list_subjs(sub).name, 'func', 'quality_check'));
+            qc_dir = fullfile(data_dir, list_subjs(sub).name, 'func',  ['quality_check_', task_name]);
+            if ~exist(fullfile(data_dir, list_subjs(sub).name, 'func', ['quality_check_', task_name]), 'dir')
+                mkdir(fullfile(data_dir, list_subjs(sub).name, 'func', ['quality_check_', task_name]));
             end
         else
-            qc_dir = fullfile(data_dir, list_subjs(sub).name, 'quality_check');
-            if ~exist(fullfile(data_dir, list_subjs(sub).name, 'quality_check'), 'dir')
-                mkdir(fullfile(data_dir, list_subjs(sub).name, 'quality_check'));
+            qc_dir = fullfile(data_dir, list_subjs(sub).name,  ['quality_check_', task_name]);
+            if ~exist(fullfile(data_dir, list_subjs(sub).name, ['quality_check_', task_name]), 'dir')
+                mkdir(fullfile(data_dir, list_subjs(sub).name, ['quality_check_', task_name]));
             end
         end
         
@@ -321,15 +321,8 @@ for sub = 1:num_subjs
             gm_data(gm_data >= mask_prob) = 1;
             
             % Save binarized GM segmentation file
-            if full_bids
-                header.fname = fullfile(data_dir, list_subjs(sub).name, 'func', ...
-                                    'quality_check', [list_subjs(sub).name, ...
+            header.fname = fullfile(qc_dir, [list_subjs(sub).name, ...
                                     '-GM_mask_', num2str(mask_prob), '.nii']);
-            else
-            header.fname = fullfile(data_dir, list_subjs(sub).name, ...
-                                    'quality_check', [list_subjs(sub).name, ...
-                                    '-GM_mask_', num2str(mask_prob), '.nii']);
-            end
             spm_write_vol(header, gm_data);
             
             % Get voxel count for GM mask
@@ -374,11 +367,11 @@ for sub = 1:num_subjs
         % Write out voxel count for all ROIs
         writetable(cell2table(roi_vox_count, 'VariableNames', ...
                   {'ROI_Name', 'Voxel_Count'}), fullfile(qc_dir, ...
-                  [list_subjs(sub).name, '_VoxelCount.csv']));
+                  [list_subjs(sub).name, '_', task_name, '_VoxelCount.csv']));
         
         % Save the variable containing the time series for the subject
-        save(fullfile(qc_dir, [list_subjs(sub).name, '_TimeSeries.mat']), ...
-             'time_series', 'list_sub_roi_files');
+        save(fullfile(qc_dir, [list_subjs(sub).name, '_', task_name, ...
+                     '_TimeSeries.mat']), 'time_series', 'list_sub_roi_files');
          
          % Create legend entries
          legend_entries = cell(num_rois, 1);
@@ -400,11 +393,12 @@ for sub = 1:num_subjs
              plot(time_series);
          end
          box off;
-         title([list_subjs(sub).name, ': Time Series']);
+         title([list_subjs(sub).name, ': ', task_name, ' - Time Series']);
          legend(legend_entries, 'Interpreter', 'none', ...
                 'Location', 'northeastoutside', 'FontSize', 6, ...
                 'Orientation', 'vertical', 'Box', 'off')
-         print(fig, fullfile(qc_dir, [list_subjs(sub).name, '_TS.png']), '-dpng', '-r600');
+         print(fig, fullfile(qc_dir, [list_subjs(sub).name, '_', task_name, ...
+                             '_TimeSeries.png']), '-dpng', '-r600');
          close(fig);
         
         % Clear some variables to prevent any conflicts
