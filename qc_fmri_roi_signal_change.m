@@ -25,7 +25,7 @@ function qc_fmri_roi_signal_change(data_dir, task_name, ref_roi_name, ...
 %% Notes:
 % Uses the output of qc_fmri_roi_signal
 % 
-% Each sub-* folder should have a quality_check_<func_name> folder having 
+% Each sub-* folder should have a quality_check_<task_name> folder having 
 % that subject's time series files saved as a mat file
 % 
 % Reference ROI should be one of the ROIs which was present in the roi_dir 
@@ -47,7 +47,7 @@ function qc_fmri_roi_signal_change(data_dir, task_name, ref_roi_name, ...
 % and multiplied by 100; the minimum, maximum, mean, and the standard 
 % deviation of this percentage value is recorded in the csv file
 % 
-%% Default:
+%% Defaults:
 % mask_gm:          'yes'
 % mask_gm_prob:     0.2
 % full_bids:        'yes'

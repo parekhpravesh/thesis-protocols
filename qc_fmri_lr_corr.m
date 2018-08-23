@@ -27,7 +27,7 @@ function qc_fmri_lr_corr(data_dir, task_name, roi_left,  roi_right, ...
 %% Notes:
 % Uses the output of qc_fmri_roi_signal
 % 
-% Each sub-* folder should have a quality_check_<func_name> folder having 
+% Each sub-* folder should have a quality_check_<task_name> folder having 
 % that subject's time series files saved as a mat file
 % 
 % roi_left and roi_right are the names of the ROIs corresponding to the
@@ -45,7 +45,7 @@ function qc_fmri_lr_corr(data_dir, task_name, roi_left,  roi_right, ...
 % still be named following BIDS specification but all files are assumed to
 % be in the same folder
 % 
-%% Default:
+%% Defaults:
 % mask_gm:          'yes'
 % mask_gm_prob:     0.2
 % full_bids:        'yes'
