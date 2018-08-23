@@ -69,6 +69,13 @@ end
 if mod(num_plots,2) == 1
     num_plots = num_plots+1;
 end
+
+% Check for squares
+if mod(sqrt(num_plots),1) == 0
+    rows = sqrt(num_plots);
+    cols = rows;
+    return;
+end
     
 % Get factors
 facs = factor(num_plots);
