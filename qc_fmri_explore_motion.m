@@ -123,6 +123,7 @@ for sub = 1:num_subjs
 
          if ~skip
              % Move the file into the quality_check folder
+             list_func_files = list_func_files(1).name;
              copyfile(fullfile(epi_dir, list_func_files), qc_dir);
              prefix = [list_subjs(sub).name, '_', task_name];
 
