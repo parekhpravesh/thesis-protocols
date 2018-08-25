@@ -2,11 +2,11 @@ function conditions = get_fmri_task_design_conn(task_name, num_subjs)
 % Function that returns fMRI experiment task design for Conn
 %% Inputs:
 % task_name:  can be any of the following (case insensitive):
-%             	* vft_classic   verbal fluency task
-%             	* vft_modern    modified VFT with hallucination query
+%             	* vftclassic   verbal fluency task
+%             	* vftmodern    modified VFT with hallucination query
 %             	* pm            prospective memory task
-%             	* hamt_hs       hallucination attention modulation task (HS)
-%               * hamt_sz       hallucination attention modulation task (SZ)
+%             	* hamths       hallucination attention modulation task (HS)
+%               * hamtsz       hallucination attention modulation task (SZ)
 %               * rest          resting state
 % 
 % num_subjs:  number of subjects for which design has to be returned
@@ -31,7 +31,7 @@ end
 
 % Check validity of task_name
 if ~ismember(task_name, ...
-        {'vft_classic', 'vft_modern', 'pm', 'hamt_hs', 'hamt_sz', 'rest'})
+        {'vftclassic', 'vftmodern', 'pm', 'hamths', 'hamtsz', 'rest'})
     error('Incorrect task_name provided');
 end
 
@@ -44,7 +44,7 @@ end
 switch(task_name)
     
     % Task: Verbal Fluency Task (Classic)
-    case 'vft_classic'
+    case 'vftclassic'
         
         % Initialize conditions
         conditions.names        = {'Instruction', 'WR', 'WG'};
@@ -56,7 +56,7 @@ switch(task_name)
             
             % Specifying onsets
             conditions.onsets{1}{subj}{1} = [0 36 72 108 144 180 216 252 288 324 360 396];
-            conditions.onsets{2}{subj}{1} = [8 80 152 224 296 388];
+            conditions.onsets{2}{subj}{1} = [8 80 152 224 296 368];
             conditions.onsets{3}{subj}{1} = [44 116 188 260 332 404];
             
             % Specifying durations
@@ -66,7 +66,7 @@ switch(task_name)
         end
         
     % Task: Verbal Fluency Task (Modern)    
-    case 'vft_modern'
+    case 'vftmodern'
         
         % Initialize conditions
         conditions.names        = {'Instruction', 'WR', 'WG', 'Query'};
@@ -118,7 +118,7 @@ switch(task_name)
         end
         
     % Task: Hallucination Attention Modulation Task (Healthy Subjects)
-    case 'hamt_hs'
+    case 'hamths'
         
         % Initialize conditions
         conditions.names        = {'Instruction', 'FA', 'VA', 'Query'};
@@ -142,7 +142,7 @@ switch(task_name)
         end
         
     % Task: Hallucination Attention Modulation Task (Schizophrenia)
-    case 'hamt_sz'
+    case 'hamtsz'
         
         % Initialize conditions
         conditions.names        = {'Instruction', 'FA', 'VA', 'HA', 'Query'};

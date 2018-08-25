@@ -2,11 +2,11 @@ function design = get_fmri_task_design_spm(task_name, units)
 % Function that returns fMRI experiment task design for SPM
 %% Inputs:
 % task_name:  can be any of the following (case insensitive):
-%             	* vft_classic   verbal fluency task
-%             	* vft_modern    modified VFT with hallucination query
+%             	* vftclassic   verbal fluency task
+%             	* vftmodern    modified VFT with hallucination query
 %             	* pm            prospective memory task
-%             	* hamt_hs       hallucination attention modulation task (HS)
-%               * hamt_sz       hallucination attention modulation task (SZ)
+%             	* hamths       hallucination attention modulation task (HS)
+%               * hamtsz       hallucination attention modulation task (SZ)
 %
 % units:      can be either (case insensitive)
 %               * scans
@@ -39,7 +39,7 @@ end
 
 % Check validity of task_name
 if ~ismember(task_name, ...
-        {'vft_classic', 'vft_modern', 'pm', 'hamt_hs', 'hamt_sz'})
+        {'vftclassic', 'vftmodern', 'pm', 'hamths', 'hamtsz'})
     error('Incorrect task_name provided');
 end
 
@@ -57,7 +57,7 @@ end
 switch(task_name)
     
     % Task: VFT Classic
-    case 'vft_classic'
+    case 'vftclassic'
         design.units = units;
         design.RT    = 4;
         
@@ -90,7 +90,7 @@ switch(task_name)
                                         38
                                         56
                                         74
-                                        97];
+                                        92];
             design.cond(2).duration =    7;
             
             % Condition: WG
@@ -126,7 +126,7 @@ switch(task_name)
                                        152
                                        224
                                        296
-                                       388];
+                                       368];
             design.cond(2).duration =   28;
             
             % Condition: WG
@@ -143,7 +143,7 @@ switch(task_name)
         design.hpf = 144;
     
     % Task: VFT Modern
-    case 'vft_modern'
+    case 'vftmodern'
         design.units = units;
         design.RT    = 4;
         
@@ -391,7 +391,7 @@ switch(task_name)
         design.hpf = 330;
         
     % Task: Hallucination Attention Modulation Task (Healthy Subjects)    
-    case 'hamt_hs'
+    case 'hamths'
         design.units = units;
         design.RT    = 3;
         
@@ -496,7 +496,7 @@ switch(task_name)
         design.hpf = 168;
         
     % Task: Hallucination Attention Modulation Task (Schizophrenia)    
-    case 'hamt_sz'
+    case 'hamtsz'
         design.units = units;
         design.RT    = 3;
         
