@@ -234,12 +234,12 @@ for sub = 1:num_subjs
         cd(fullfile(data_dir, list_subjs(sub).name));
     end
     
-    % List smoothed normalized unwarped or normalized unwarped files which
-    % match the task_name pattern
+    % List smoothed normalized or normalized files which match the
+    % task_name pattern
     if smoothed
-        list_func_files = dir(['swu*', task_name, '*.nii']);
+        list_func_files = dir(['sw*', task_name, '*.nii']);
     else
-        list_func_files = dir(['wu*', task_name, '*.nii']);
+        list_func_files = dir(['w*', task_name, '*.nii']);
     end
     
     % Remove any files which got listed and are not 4D files

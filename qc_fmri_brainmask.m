@@ -216,9 +216,9 @@ for sub = 1:num_subjs
         end
         cd(epi_dir);
         if smoothed
-            list_func_files = dir(['swu*', task_name, '*.nii']);
+            list_func_files = dir(['sw*', task_name, '*.nii']);
         else
-            list_func_files = dir(['wu*', task_name, '*.nii']);
+            list_func_files = dir(['w*', task_name, '*.nii']);
         end
         
          % Remove any files which got listed and are not 4D files
