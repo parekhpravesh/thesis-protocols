@@ -460,7 +460,7 @@ for sub = 1:num_subjs
              
              % Save the image
              print(fig2, fullfile(qc_dir, [list_subjs(sub).name, '_', ...
-                 task_name, '_brainmask_Coronal.png']), '-dpng', '-r600');
+                 task_name, '_brainmask_coronal.png']), '-dpng', '-r600');
              close(fig2);
              
              %% Transverse view
@@ -555,7 +555,7 @@ for sub = 1:num_subjs
              
              % Save the image
              print(fig3, fullfile(qc_dir, [list_subjs(sub).name, '_', ...
-                 task_name, '_brainmask_Transverse.png']), '-dpng', '-r600');
+                 task_name, '_brainmask_transverse.png']), '-dpng', '-r600');
              close(fig3);
          end
     end
