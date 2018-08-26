@@ -28,7 +28,7 @@ function qc_fmri_compile_results(data_dir, task_name, ref_roi_name, full_bids)
 % Assumes that the same ROI files and settings were used for all subjects
 % for a given task; if not, the compiled sheet would be incorrect
 % 
-% % Full BIDS specification means that there are separate anat and func
+% Full BIDS specification means that there are separate anat and func
 % folders inside the subject folder; if specified as no, the files should
 % still be named following BIDS specification but all files are assumed to
 % be in the same folder
@@ -112,13 +112,22 @@ else
                         '_ref_', ref_roi_name);
     
     header = {'subject_ID',                   'task_name',                   ...
-              'refRMS_threshold',             'refRMS_num_outliers',         ...
-              'DVARS_threshold',              'DVARS_num_outliers',          ...
-              'FD_threshold',                 'FD_num_outliers',             ...
-              'total_num_outliers',           'num_common_outliers',         ...
-              'LR_correlation',               'brainmask_threshold',         ...
-              'vox_count_template_brainmask', 'vox_count_subject_brainmask', ...
-              'vox_count_difference',         'vox_count_percentage_difference'};
+              'anat_filename',                'anat_acq_vox',                ...
+              'anat_dimensions',              'anat_img_TR',                 ...
+              'anat_img_TE',                  'anat_json_TR',                ...
+              'anat_json_TE',                 'anat_json_flipAng',           ...
+              'func_filename',                'func_acq_vox',                ...
+              'func_dimensions',              'func_img_TR',                 ...
+              'func_img_TE',                  'func_json_TR',                ... 
+              'func_json_TE',                 'func_json_FlipAngle',         ... 
+              'func_num_volumes',             'refRMS_threshold',            ...
+              'refRMS_num_outliers',          'DVARS_threshold',             ...
+              'DVARS_num_outliers',           'FD_threshold',                ...
+              'FD_num_outliers',              'total_num_outliers',          ...
+              'num_common_outliers',          'LR_correlation',              ...
+              'brainmask_threshold',          'vox_count_template_brainmask',...
+              'vox_count_subject_brainmask',  'vox_count_difference',        ...
+              'vox_count_percentage_difference'};
           
     more_header_names = cell(1, num_target_rois*4);
     count = 1;
@@ -159,20 +168,46 @@ for sub = 1:num_subjs
         summary_qc{sub, 1} = list_subjs(sub).name;
         summary_qc{sub, 2} = task_name;
         
+        % Load acquisition details
+        load_name = fullfile(qc_dir, [list_subjs(sub).name, ...
+                             '_acq_details_', task_name, '.mat']);
+        load(load_name, 'acq_info');
+        [~, tmp_anat] = fileparts(acq_info.anat_filename);
+        [~, tmp_func] = fileparts(acq_info.func_filename);
+        
+        % Populate data into summary_qc
+        summary_qc{sub, 3}  = tmp_anat;
+        summary_qc{sub, 4}  = acq_info.anat.img_vox_size;
+        summary_qc{sub, 5}  = acq_info.anat.img_dim;
+        summary_qc{sub, 6}  = acq_info.anat.img_TR;
+        summary_qc{sub, 7}  = acq_info.anat.img_TE;
+        summary_qc{sub, 8}  = acq_info.anat.json_TR;
+        summary_qc{sub, 9}  = acq_info.anat.json_TE;
+        summary_qc{sub, 10} = acq_info.anat.json_flipAng;
+        summary_qc{sub, 11} = tmp_func;
+        summary_qc{sub, 12} = acq_info.func.img_vox_size;
+        summary_qc{sub, 13} = acq_info.func.img_dim;
+        summary_qc{sub, 14} = acq_info.func.img_TR;
+        summary_qc{sub, 15} = acq_info.func.img_TE;
+        summary_qc{sub, 16} = acq_info.func.json_TR;
+        summary_qc{sub, 17} = acq_info.func.json_TE;
+        summary_qc{sub, 18} = acq_info.func.json_flipAng;
+        summary_qc{sub, 19} = acq_info.func.num_vol;
+        
         % Load motion_profile
         load_name = fullfile(qc_dir, [list_subjs(sub).name, '_', task_name,   ...
                             '_motion_profile.mat']);
         load(load_name, 'outlier');
         
         % Populate results into summary_qc
-        summary_qc{sub, 3}  = outlier.refRMS.threshold;
-        summary_qc{sub, 4}  = outlier.refRMS.num_outliers;
-        summary_qc{sub, 5}  = outlier.dvars.threshold;
-        summary_qc{sub, 6}  = outlier.dvars.num_outliers;
-        summary_qc{sub, 7}  = outlier.FD.threshold;
-        summary_qc{sub, 8}  = outlier.FD.num_outliers;
-        summary_qc{sub, 9}  = outlier.num_total_outliers;
-        summary_qc{sub, 10} = outlier.num_common_outliers;
+        summary_qc{sub, 20} = outlier.refRMS.threshold;
+        summary_qc{sub, 21} = outlier.refRMS.num_outliers;
+        summary_qc{sub, 22} = outlier.dvars.threshold;
+        summary_qc{sub, 23} = outlier.dvars.num_outliers;
+        summary_qc{sub, 24} = outlier.FD.threshold;
+        summary_qc{sub, 25} = outlier.FD.num_outliers;
+        summary_qc{sub, 26} = outlier.num_total_outliers;
+        summary_qc{sub, 27} = outlier.num_common_outliers;
         clear outlier
         
         % Load LRcorr.mat
@@ -181,7 +216,7 @@ for sub = 1:num_subjs
         load(load_name, 'lr_corr');
         
         % Populate results into summary_qc
-        summary_qc{sub, 11} = lr_corr;
+        summary_qc{sub, 28} = lr_corr;
         clear lr_corr
         
         % Load brainmask voxel count
@@ -191,11 +226,11 @@ for sub = 1:num_subjs
                         'vox_count_brainmask', 'vox_count_difference');
         
         % Populate results into summary_qc
-        summary_qc{sub, 12} = threshold;
-        summary_qc{sub, 13} = vox_count_template;
-        summary_qc{sub, 14} = vox_count_brainmask;
-        summary_qc{sub, 15} = vox_count_difference;
-        summary_qc{sub, 16} = (vox_count_difference/vox_count_template)*100;
+        summary_qc{sub, 29} = threshold;
+        summary_qc{sub, 30} = vox_count_template;
+        summary_qc{sub, 31} = vox_count_brainmask;
+        summary_qc{sub, 32} = vox_count_difference;
+        summary_qc{sub, 33} = (vox_count_difference/vox_count_template)*100;
         clear threshold vox_count_template vox_count_brainmask vox_count_difference
          
         % Load PSC
@@ -204,7 +239,7 @@ for sub = 1:num_subjs
         load(load_name, 'min_percent_diff',  'max_percent_diff', ...
                         'mean_percent_diff', 'std_percent_diff');
         
-        count = 16;
+        count = 33;
         % Populate results into summary_qc
         for roi = 1:num_target_rois
             count = count + 1;
