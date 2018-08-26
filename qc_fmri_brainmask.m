@@ -568,3 +568,8 @@ end
 
 %% Delete resliced version of brainmask file
 delete(brainmask);
+
+%% Restore all changed graphics settings
+set(0, 'defaultTextFontSize','remove');
+set(0, 'defaultTextFontName','remove');
+set(0, 'defaultTextColor','remove');
