@@ -178,7 +178,7 @@ for sub = 1:num_subjs
             lr_corr = corr(time_series(:,left_loc), time_series(:,right_loc));
             
             % Save mat file
-            mat_name = [list_subjs(sub).name, '_', task_name, 'LR_corr.mat'];
+            mat_name = [list_subjs(sub).name, '_', task_name, '_LR_corr.mat'];
             save(mat_name, 'list_sub_roi_files', 'lr_corr', 'left_name', 'right_name');
         end
     end

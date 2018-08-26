@@ -177,7 +177,7 @@ for sub = 1:num_subjs
         
         % Load LRcorr.mat
         load_name = fullfile(qc_dir, [list_subjs(sub).name, '_', task_name, ...
-                             'LR_corr.mat']);
+                             '_LR_corr.mat']);
         load(load_name, 'lr_corr');
         
         % Populate results into summary_qc
