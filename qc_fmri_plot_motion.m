@@ -234,7 +234,7 @@ for sub = 1:num_subjs
             for cond = 1:length(task_design.cond)
                 text{cond} = task_design.cond(cond).name;
             end
-            legend(h, text, 'Location', 'southoutside', ...
+            legend(h, text, 'Location', 'southoutside', 'FontName', fontname, ...
                    'Orientation', 'horizontal')
             count = count + 1;   
         end
@@ -255,7 +255,8 @@ for sub = 1:num_subjs
         
         % Adding legend
         legend({'refRMS', ['threshold = ', num2str(outlier.refRMS.threshold)], ...
-                'outliers'}, 'Location', 'southoutside', 'Orientation', 'horizontal');
+                'outliers'}, 'Location', 'southoutside', 'Orientation', 'horizontal', ...
+                'FontName', fontname);
          
         % Axis customization
         xlim([1 num_time_points+1]);
@@ -314,7 +315,8 @@ for sub = 1:num_subjs
         
         % Adding legend
         legend({'DVARS', ['threshold = ', num2str(outlier.dvars.threshold)], ...
-                'outliers'}, 'Location', 'southoutside', 'Orientation', 'horizontal');
+                'outliers'}, 'Location', 'southoutside', 'Orientation', 'horizontal', ...
+                'FontName', fontname);
             
         % Axis customization
         xlim([1 num_time_points+1]);
@@ -373,7 +375,8 @@ for sub = 1:num_subjs
         
         % Adding legend
         legend({'FD', ['threshold = ', num2str(outlier.FD.threshold)], ...
-                'outliers'}, 'Location', 'southoutside', 'Orientation', 'horizontal');
+                'outliers'}, 'Location', 'southoutside', 'Orientation', 'horizontal', ...
+                'FontName', fontname);
             
         % Axis customization
         xlim([1 num_time_points+1]);
