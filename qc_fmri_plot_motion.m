@@ -16,7 +16,12 @@ function qc_fmri_plot_motion(data_dir, task_name, full_bids)
 % created. This image is named <subject_ID>_<task_name>_motion_profile.png;
 % if design is availble, the design of the experiment is also shown along
 % with the plot. Outlier information across all three methods are saved in
-% a single mat file named <subject_ID>_<task)name>_motion_profile.mat
+% a single mat file named <subject_ID>_<task_name>_motion_profile.mat
+% Additionally, a mat and a text file are written out having a column of
+% zeros and a value of 1 corresponding to the location where outliers exist
+% (across all three methods of motion correction). This file can be used
+% for censoring these time points. This file is named
+% <subject_ID>_<task_name>_censoring.mat/txt
 % 
 %% Notes:
 % Each sub-* folder should have a quality_check_<task_name> folder (created
@@ -130,54 +135,96 @@ for sub = 1:num_subjs
     if ~exist(qc_dir, 'dir')
         warning(['Cannot locate quality_check_', task_name, ' for ', ...
                 list_subjs(sub).name, '; skipping']);
-    else
+    else        
+        %% Compile information
         cd(qc_dir);
         template_name = [list_subjs(sub).name, '_', task_name];
-        
-        %% Read txt and var file for all three methods
-        refRMS_data     = dlmread([template_name, '_refRMS.txt'], '%d');
-        refRMS_outliers = dlmread([template_name, '_refRMS_var.txt'], '%d');
-        dvars_data      = dlmread([template_name, '_DVARS.txt'], '%d');
-        dvars_outliers  = dlmread([template_name, '_DVARS_var.txt'], '%d');
-        FD_data         = dlmread([template_name, '_FD.txt'], '%d');
-        FD_outliers     = dlmread([template_name, '_FD_var.txt'], '%d');
 
-        %% Compile information
+        % Read txt files for all three methods
+        refRMS_data = dlmread([template_name, '_refRMS.txt'], '%d');
+        dvars_data  = dlmread([template_name, '_DVARS.txt'], '%d');
+        FD_data     = dlmread([template_name, '_FD.txt'], '%d');
+        
         % refRMS
-        outlier.refRMS.num_outliers = size(refRMS_outliers, 2);
-        [outlier.refRMS.outliers,~] = find(refRMS_outliers);
-        outlier.refRMS.threshold    = quantile_iqr(refRMS_data, num_time_points);
-        outlier.refRMS.minimum      = min(refRMS_data(refRMS_data>0));
-        outlier.refRMS.maximum      = max(refRMS_data);
+        if exist([template_name, '_refRMS_var.txt'], 'file')
+            refRMS_outliers             = dlmread([template_name, ...
+                                                  '_refRMS_var.txt'], '%d');
+            outlier.refRMS.num_outliers = size(refRMS_outliers, 2);
+            [outlier.refRMS.outliers,~] = find(refRMS_outliers);
+            outlier.refRMS.threshold    = quantile_iqr(refRMS_data, num_time_points);
+            outlier.refRMS.minimum      = min(refRMS_data(refRMS_data>0));
+            outlier.refRMS.maximum      = max(refRMS_data);
+        else
+            % No outliers using refRMS
+            outlier.refRMS.num_outliers = 0;
+            outlier.refRMS.outliers     = [];
+            outlier.refRMS.threshold    = quantile_iqr(refRMS_data, num_time_points);
+            outlier.refRMS.minimum      = min(refRMS_data(refRMS_data>0));
+            outlier.refRMS.maximum      = max(refRMS_data);
+        end
         
         % DVARS
-        outlier.dvars.num_outliers  = size(dvars_outliers, 2);
-        [outlier.dvars.outliers,~]  = find(dvars_outliers);
-        outlier.dvars.threshold     = quantile_iqr(dvars_data, num_time_points);
-        outlier.dvars.minimum       = min(dvars_data(dvars_data>0));
-        outlier.dvars.maximum       = max(dvars_data);
+        if exist([template_name, '_DVARS_var.txt'], 'file')
+            dvars_outliers              = dlmread([template_name, ...
+                                                  '_DVARS_var.txt'], '%d');
+            outlier.dvars.num_outliers  = size(dvars_outliers, 2);
+            [outlier.dvars.outliers,~]  = find(dvars_outliers);
+            outlier.dvars.threshold     = quantile_iqr(dvars_data, num_time_points);
+            outlier.dvars.minimum       = min(dvars_data(dvars_data>0));
+            outlier.dvars.maximum       = max(dvars_data);
+        else
+            % No outliers using DVARS
+            outlier.dvars.num_outliers  = 0;
+            outlier.dvars.outliers      = [];
+            outlier.dvars.threshold     = quantile_iqr(dvars_data, num_time_points);
+            outlier.dvars.minimum       = min(dvars_data(dvars_data>0));
+            outlier.dvars.maximum       = max(dvars_data);
+        end
         
         % FD
-        outlier.FD.num_outliers     = size(FD_outliers, 2);
-        [outlier.FD.outliers,~]     = find(FD_outliers);
-        outlier.FD.threshold        = quantile_iqr(FD_data, num_time_points);
-        outlier.FD.minimum          = min(FD_data(FD_data>0));
-        outlier.FD.maximum          = max(FD_data);
-
+        if exist([template_name, '_FD_var.txt'], 'file')
+            FD_outliers                 = dlmread([template_name, ...
+                                                  '_FD_var.txt'], '%d');
+            outlier.FD.num_outliers     = size(FD_outliers, 2);
+            [outlier.FD.outliers,~]     = find(FD_outliers);
+            outlier.FD.threshold        = quantile_iqr(FD_data, num_time_points);
+            outlier.FD.minimum          = min(FD_data(FD_data>0));
+            outlier.FD.maximum          = max(FD_data);
+        else
+            outlier.FD.num_outliers     = 0;
+            outlier.FD.outliers         = [];
+            outlier.FD.threshold        = quantile_iqr(FD_data, num_time_points);
+            outlier.FD.minimum          = min(FD_data(FD_data>0));
+            outlier.FD.maximum          = max(FD_data);
+        end
+        
         % Additional outlier information
-        outlier.total_outliers      = unique([outlier.refRMS.outliers; ...
-                                              outlier.dvars.outliers;  ...
-                                              outlier.FD.outliers]);
-        outlier.num_total_outliers  = length(outlier.total_outliers);
-        outlier.common_outliers     = intersect(intersect(outlier.refRMS.outliers, ...
-                                                          outlier.dvars.outliers), ...
-                                                          outlier.FD.outliers);
-        outlier.num_common_outliers = length(outlier.common_outliers);
+        outlier.total_outliers          = unique([outlier.refRMS.outliers; ...
+                                                  outlier.dvars.outliers;  ...
+                                                  outlier.FD.outliers]);
+        outlier.num_total_outliers      = length(outlier.total_outliers);
+        outlier.common_outliers         = intersect(intersect(outlier.refRMS.outliers, ...
+                                                              outlier.dvars.outliers), ...
+                                                              outlier.FD.outliers);
+        outlier.num_common_outliers     = length(outlier.common_outliers);
         
         % Subject specific information
-        outlier.subject_name        = list_subjs(sub).name;
-        outlier.num_time_points     = num_time_points;
-        outlier.task_name           = task_name;
+        outlier.subject_name            = list_subjs(sub).name;
+        outlier.num_time_points         = num_time_points;
+        outlier.task_name               = task_name;
+        
+        % Create censoring profile
+        if outlier.num_total_outliers > 0
+            censoring_info = zeros(outlier.num_time_points, outlier.num_total_outliers);
+            for out = 1:outlier.num_total_outliers
+                censoring_info(outlier.total_outliers(out), out) = 1;
+            end
+            save_name = fullfile(qc_dir, [list_subjs(sub).name, '_', task_name, ...
+                                 '_censoring.mat']);
+            save(save_name, 'censoring_info');
+            save_name = strrep(save_name, '.mat', '.txt');
+            dlmwrite(save_name, censoring_info, 'delimiter', '\t');
+        end
         
         %% Save this variable
         save_name = fullfile(qc_dir, [list_subjs(sub).name, '_', task_name, ...
@@ -248,43 +295,54 @@ for sub = 1:num_subjs
         plot(repmat(outlier.refRMS.threshold, num_time_points, 1), ...
             'Color', threshold_colour, 'LineStyle', '--', 'LineWidth', 1);
         
-        % Marking outliers
-        plot(time_points(outlier.refRMS.outliers), ...
-             refRMS_data(outlier.refRMS.outliers), ...
-             'p', 'MarkerSize', 6, 'MarkerEdgeColor', outlier_colour)
+        if outlier.refRMS.num_outliers > 0
+            % Marking outliers
+            plot(time_points(outlier.refRMS.outliers), ...
+                 refRMS_data(outlier.refRMS.outliers), ...
+                 'p', 'MarkerSize', 6, 'MarkerEdgeColor', outlier_colour)
+
+             % Adding legend
+             legend({'refRMS', ['threshold = ', num2str(outlier.refRMS.threshold)], ...
+                     'outliers'}, 'Location', 'southoutside', ...
+                     'Orientation', 'horizontal', 'FontName', fontname);
+             
+             % Creating title
+             num_lines = ceil(length(outlier.refRMS.outliers)/10);
+             num_blank = length([list_subjs(sub).name, ' ', task_name, ' refRMS: ']);
+             start_loc = 1;
+             text = cell(num_lines,1);
+             for line = 1:num_lines
+                 if line == num_lines
+                     text{line} = num2str((outlier.refRMS.outliers(start_loc:end))', '%03d, ');
+                 else
+                     text{line} = num2str((outlier.refRMS.outliers(start_loc:start_loc+9))', '%03d, ');
+                 end
+                 % Add blanks if necessary
+                 if line ~= 1
+                     text{line} = [blanks(num_blank), text{line}];
+                 end
+                 start_loc = start_loc + 10;
+             end
+             
+             % Remove last character from the last line (extra comma)
+             text{end}(end) = '';
+        else
+            % Case of no outliers
+            legend({'refRMS', ['threshold = ', num2str(outlier.refRMS.threshold)]}, ...
+                    'Location', 'southoutside', 'Orientation', 'horizontal', ...
+                    'FontName', fontname);
+            
+            % Creating title
+            num_lines = 1;
+            text = {''};
+        end
         
-        % Adding legend
-        legend({'refRMS', ['threshold = ', num2str(outlier.refRMS.threshold)], ...
-                'outliers'}, 'Location', 'southoutside', 'Orientation', 'horizontal', ...
-                'FontName', fontname);
-         
         % Axis customization
         xlim([1 num_time_points+1]);
         ax = gca;
         ax.XTick = 0:10:num_time_points;
         box off
-        
-        % Creating title
-        num_lines = ceil(length(outlier.refRMS.outliers)/10);
-        num_blank = length([list_subjs(sub).name, ' ', task_name, ' refRMS: ']);
-        start_loc = 1;
-        text = cell(num_lines,1);
-        for line = 1:num_lines
-            if line == num_lines
-                text{line} = num2str((outlier.refRMS.outliers(start_loc:end))', '%03d, ');
-            else
-                text{line} = num2str((outlier.refRMS.outliers(start_loc:start_loc+9))', '%03d, ');
-            end
-            % Add blanks if necessary
-            if line ~= 1
-                text{line} = [blanks(num_blank), text{line}];
-            end
-            start_loc = start_loc + 10;
-        end
-        
-        % Remove last character from the last line (extra comma)
-        text{end}(end) = '';
-        
+
         % Add subject name, task name, and refRMS in the first line
         text{1} = [list_subjs(sub).name, ' ', task_name, ' refRMS: ', text{1}];
         
@@ -307,43 +365,53 @@ for sub = 1:num_subjs
         % Adding threshold line
         plot(repmat(outlier.dvars.threshold, num_time_points, 1), ...
             'Color', threshold_colour, 'LineStyle', '--', 'LineWidth', 1);
+        if outlier.dvars.num_outliers > 0
+            % Marking outliers
+            plot(time_points(outlier.dvars.outliers), ...
+                 dvars_data(outlier.dvars.outliers), ...
+                 'p', 'MarkerSize', 6, 'MarkerEdgeColor', outlier_colour)
+            
+            % Adding legend
+            legend({'DVARS', ['threshold = ', num2str(outlier.dvars.threshold)], ...
+                    'outliers'}, 'Location', 'southoutside', ...
+                    'Orientation', 'horizontal', 'FontName', fontname);
+                
+            % Creating title
+            num_lines = ceil(length(outlier.dvars.outliers)/10);
+            num_blank = length([list_subjs(sub).name, ' ', task_name, ' DVARS: ']);
+            start_loc = 1;
+            text = cell(num_lines,1);
+            for line = 1:num_lines
+                if line == num_lines
+                    text{line} = num2str((outlier.dvars.outliers(start_loc:end))', '%03d, ');
+                else
+                    text{line} = num2str((outlier.dvars.outliers(start_loc:start_loc+9))', '%03d, ');
+                end
+                % Add blanks if necessary
+                if line ~= 1
+                    text{line} = [blanks(num_blank), text{line}];
+                end
+                start_loc = start_loc + 10;
+            end
         
-        % Marking outliers
-        plot(time_points(outlier.dvars.outliers), ...
-             dvars_data(outlier.dvars.outliers), ...
-             'p', 'MarkerSize', 6, 'MarkerEdgeColor', outlier_colour)
-        
-        % Adding legend
-        legend({'DVARS', ['threshold = ', num2str(outlier.dvars.threshold)], ...
-                'outliers'}, 'Location', 'southoutside', 'Orientation', 'horizontal', ...
-                'FontName', fontname);
+            % Remove last character from the last line (extra comma)
+            text{end}(end) = '';
+        else
+            % Case of no outliers
+            legend({'DVARS', ['threshold = ', num2str(outlier.dvars.threshold)]}, ...
+                    'Location', 'southoutside', 'Orientation', 'horizontal', ...
+                    'FontName', fontname);
+               
+            % Creating title
+            num_lines = 1;
+            text = {''};
+        end
             
         % Axis customization
         xlim([1 num_time_points+1]);
         ax = gca;
         ax.XTick = 0:10:num_time_points;
         box off
-        
-        % Creating title
-        num_lines = ceil(length(outlier.dvars.outliers)/10);
-        num_blank = length([list_subjs(sub).name, ' ', task_name, ' DVARS: ']);
-        start_loc = 1;
-        text = cell(num_lines,1);
-        for line = 1:num_lines
-            if line == num_lines
-                text{line} = num2str((outlier.dvars.outliers(start_loc:end))', '%03d, ');
-            else
-                text{line} = num2str((outlier.dvars.outliers(start_loc:start_loc+9))', '%03d, ');
-            end
-            % Add blanks if necessary
-            if line ~= 1
-                text{line} = [blanks(num_blank), text{line}];
-            end
-            start_loc = start_loc + 10;
-        end
-        
-        % Remove last character from the last line (extra comma)
-        text{end}(end) = '';
         
         % Add subject name, task name, and DVARS in the first line
         text{1} = [list_subjs(sub).name, ' ', task_name, ' DVARS: ', text{1}];
@@ -368,42 +436,53 @@ for sub = 1:num_subjs
         plot(repmat(outlier.FD.threshold, num_time_points, 1), ...
             'Color', threshold_colour, 'LineStyle', '--', 'LineWidth', 1);
         
-        % Marking outliers
-        plot(time_points(outlier.FD.outliers), ...
-             FD_data(outlier.FD.outliers), ...
-             'p', 'MarkerSize', 6, 'MarkerEdgeColor', outlier_colour)
-        
-        % Adding legend
-        legend({'FD', ['threshold = ', num2str(outlier.FD.threshold)], ...
-                'outliers'}, 'Location', 'southoutside', 'Orientation', 'horizontal', ...
-                'FontName', fontname);
+        if outlier.FD.num_outliers > 0
+            % Marking outliers
+            plot(time_points(outlier.FD.outliers), ...
+                 FD_data(outlier.FD.outliers), ...
+                 'p', 'MarkerSize', 6, 'MarkerEdgeColor', outlier_colour)
+            
+            % Adding legend
+            legend({'FD', ['threshold = ', num2str(outlier.FD.threshold)], ...
+                    'outliers'}, 'Location', 'southoutside', ...
+                    'Orientation', 'horizontal', 'FontName', fontname);
+                
+            % Creating title
+            num_lines = ceil(length(outlier.FD.outliers)/10);
+            num_blank = length([list_subjs(sub).name, ' ', task_name, ' FD: ']);
+            start_loc = 1;
+            text = cell(num_lines,1);
+            for line = 1:num_lines
+                if line == num_lines
+                    text{line} = num2str((outlier.FD.outliers(start_loc:end))', '%03d, ');
+                else
+                    text{line} = num2str((outlier.FD.outliers(start_loc:start_loc+9))', '%03d, ');
+                end
+                % Add blanks if necessary
+                if line ~= 1
+                    text{line} = [blanks(num_blank), text{line}];
+                end
+                start_loc = start_loc + 10;
+            end
+            
+            % Remove last character from the last line (extra comma)
+            text{end}(end) = '';
+        else
+            % Case of no outliers
+            legend({'FD', ['threshold = ', num2str(outlier.FD.threshold)]},  ...
+                    'Location', 'southoutside', 'Orientation', 'horizontal', ...
+                    'FontName', fontname);
+                
+            % Creating title
+            num_lines = 1;
+            text = {''};
+        end
             
         % Axis customization
         xlim([1 num_time_points+1]);
         ax = gca;
         ax.XTick = 0:10:num_time_points;
         box off
-        
-        % Creating title
-        num_lines = ceil(length(outlier.FD.outliers)/10);
-        num_blank = length([list_subjs(sub).name, ' ', task_name, ' FD: ']);
-        start_loc = 1;
-        text = cell(num_lines,1);
-        for line = 1:num_lines
-            if line == num_lines
-                text{line} = num2str((outlier.FD.outliers(start_loc:end))', '%03d, ');
-            else
-                text{line} = num2str((outlier.FD.outliers(start_loc:start_loc+9))', '%03d, ');
-            end
-            % Add blanks if necessary
-            if line ~= 1
-                text{line} = [blanks(num_blank), text{line}];
-            end
-            start_loc = start_loc + 10;
-        end
-        
-        % Remove last character from the last line (extra comma)
-        text{end}(end) = '';
         
         % Add subject name, task name, and FD in the first line
         text{1} = [list_subjs(sub).name, ' ', task_name, ' FD: ', text{1}];
