@@ -145,6 +145,9 @@ else
     header = [header, more_header_names];
     summary_qc = cell(num_subjs, length(header));
     
+    % Make all header entries as valid MATLAB variable names
+    header = matlab.lang.makeValidName(header, 'ReplacementStyle', 'underscore');
+    
     clear min_names max_names mean_names std_names more_header_names target_name
 end
 
