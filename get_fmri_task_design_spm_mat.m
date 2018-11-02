@@ -11,7 +11,7 @@ function get_fmri_task_design_spm_mat(task_name, units, save_dir)
 %
 % units:      can be either (case insensitive)
 %               * scans
-%               * seconds
+%               * secs
 %
 % save_dir:   location where the task design mat file is saved
 % 
@@ -46,11 +46,11 @@ end
 
 % Check if units is provided; otherwise default to seconds
 if ~exist('units', 'var')
-    units = 'seconds';
+    units = 'secs';
 else
     % Check if correct units is provided
-    if ~strcmpi(units, 'scans') && ~strcmpi(units, 'seconds')
-        error('Incorrect units provided');
+    if ~strcmpi(units, 'scans') && ~strcmpi(units, 'secs')
+        error('Incorrect units provided; scans or secs should be given');
     end
 end
 
