@@ -1,16 +1,11 @@
-function [summary_data, scores, latencies, task_load, ...
-          scores_desc, latencies_desc, task_load_desc] ...
-         = get_PM_scores(filename, score_type, latency_type)
+function [summary_data, scores, latencies, task_load, scores_desc, ...
+          latencies_desc, task_load_desc] = get_PM_scores(filename, latency_type)
 % Function to read an exported (in Excel format) edat text file and compute
 % performance scores and latencies for PM task
 %% Inputs:
 % filename:                 cell containing rows of name(s)/full paths of
 %                           text file(s) which were previously exported in
 %                           Excel format from E-DataAid
-% score_type:               method for calculating scores; one of the
-%                           following methods should be specified:
-%                           	* 'score'
-%                               * 'percentage'
 % latency_type:             method for calculating latency; one of the
 %                           following methods should be spcified:
 %                               * 'all'
@@ -34,6 +29,11 @@ function [summary_data, scores, latencies, task_load, ...
 % 
 % See Notes for a description of organization of these variables
 % 
+% A csv file named summary_PM_DDMMMYYYY is written in the pwd containing
+% summary_data; a mat file named behavioural_data_PM_DDMMMYYYY is written
+% in the pwd containing all the variables including input variables
+% (pwd = present working directory)
+% 
 %% Notes:
 % The input text files should have been exported in Excel format without
 % selecting unicode from E-DataAid
@@ -48,42 +48,51 @@ function [summary_data, scores, latencies, task_load, ...
 % 
 % The summary_data variable is a table with the following columns:
 % 01) file_name:            file name
-% 02) Score_BL:             BL condition performance
-% 03) Score_OT:             OT condition performance
-% 04) Score_WM:             WM condition performance
-% 05) Score_PM:             PM condition performance (overall)
-% 06) Score_PM_in_PM:       PM performance in PM condition (precise)
-% 07) Score_PM_in_PM_Lib:   PM performance in PM condition (liberal)
-% 08) Score_OT_in_PM:       OT performance in PM condition
-% 09) Score_WM_Query:       WM condition query slide performance 
-% 10) Score_OT_WM:          OT performance (OT condition) -
+% 02) score_BL:             BL condition performance
+% 03) score_OT:             OT condition performance
+% 04) score_WM:             WM condition performance
+% 05) score_PM:             PM condition performance (overall)
+% 06) score_PM_in_PM:       PM performance in PM condition (precise)
+% 07) score_PM_in_PM_Lib:   PM performance in PM condition (liberal)
+% 08) score_OT_in_PM:       OT performance in PM condition
+% 09) score_WM_Query:       WM condition query slide performance
+% 10) prnct_BL:             percentage of trials correct in BL condition
+% 11) prnct_OT:             percentage of trials correct in OT condition
+% 12) prnct_WM:             percentage of trials correct in WM condition
+% 13) prnct_PM:             percentage of trials correct in PM condition
+% 14) prnct_PM_in_PM:       percentage of PM trials correct in PM condition (precise)
+% 15) prnct_PM_in_PM_Lib:   percentage of PM trials correct in PM condition (liberal)
+% 16) prnct_OT_in_PM:       percentage of OT trials correct in PM condition
+% 17) prnct_WM_Query:       percentage of WM query slides correct
+% 18) RT_BL:                mean BL condition latency
+% 19) RT_OT:                mean OT condition latency
+% 20) RT_WM:                mean WM condition latency
+% 21) RT_PM:                mean PM condition latency (overall)
+% 22) RT_PM_in_PM:          mean PM condition latency (PM trials only)
+% 23) RT_OT_in_PM:          mean PM condition latency (OT trials only)
+% 24) Missed_BL:            number of trials missed in BL condition
+% 25) Missed_OT:            number of trials missed in OT condition
+% 26) Missed_WM:            number of trials missed in WM condition
+% 27) Missed_PM:            number of trials missed in PM condition
+% 28) BL_lt200ms:           number of BL trials with <= 200 ms latency 
+% 29) OT_lt200ms:           number of OT trials with <= 200 ms latency
+% 30) WM_lt200ms:           number of WM trials with <= 200 ms latency
+% 31) PM_lt200ms:           number of PM trials with <= 200 ms latency
+% 32) num_PM_in_PM_trials:  number of PM trials in the PM condition
+% 33) num_OT_in_PM_trials:  number of OT trials in the PM condition
+% 34) score_OT_WM:          OT performance (OT condition) -
 %                           WM performance (WM condition)
-% 11) Score_OT_PM:          OT performance (OT condition) - 
+% 35) score_OT_PM:          OT performance (OT condition) - 
 %                           PM performance (overall; OT+PM)
-% 12) RT_BL:                mean BL condition latency
-% 13) RT_OT:                mean OT condition latency
-% 14) RT_WM:                mean WM condition latency
-% 15) RT_PM:                mean PM condition latency (overall)
-% 16) RT_PM_in_PM:          mean PM condition latency (PM trials only)
-% 17) RT_OT_in_PM:          mean PM condition latency (OT trials only)
-% 18) RT_WM_OT:             mean WM condition latency (WM condition) - 
+% 36) RT_WM_OT:             mean WM condition latency (WM condition) - 
 %                           mean OT condition latency (OT condition)
-% 19) RT_PM_OT:             mean PM condition latency (PM condition; OT+PM) -
+% 37) RT_PM_OT:             mean PM condition latency (PM condition; OT+PM) -
 %                           mean OT condition latency (OT condition)
-% 20) BL_missed:            number of trials missed in BL condition
-% 21) OT_missed:            number of trials missed in OT condition
-% 22) WM_missed:            number of trials missed in WM condition
-% 23) PM_missed:            number of trials missed in PM condition
-% 24) BL_lt200ms:           number of BL trials with <= 200 ms latency 
-% 25) OT_lt200ms:           number of OT trials with <= 200 ms latency
-% 26) WM_lt200ms:           number of WM trials with <= 200 ms latency
-% 27) PM_lt200ms:           number of PM trials with <= 200 ms latency
-% 28) WMOT_negative:        number of trials resulting in a negative value
-%                           when subtracting mean WM and mean OT latencies
-% 29) PMOT_negative:        number of trials resulting in a negative value
-%                           when subtracting mean PM and mean OT latencies
-% 30) score_type:           unit of scores: 'score' or 'percentage'
-% 31) latency_type:         method for calculating latency
+% 38) WMOT_negative:        number of trials resulting in a negative value
+%                           when subtracting WM and OT latencies
+% 39) PMOT_negative:        number of trials resulting in a negative value
+%                           when subtracting PM and OT latencies
+% 40) latency_type:         method for calculating latency
 % 
 % The scores variable is a 2D or 3D matrix having trial level performance 
 % information stored in the following columns (NaN values for empty spots):
@@ -107,11 +116,13 @@ function [summary_data, scores, latencies, task_load, ...
 % 06) RT_PM_in_PM:          PM condition latencies (PM trials only)
 % 07) RT_OT_in_PM:          PM condition latencies (OT trials only)
 % 
-% The task_load variable is a 2D or 3D matrix having WM/PM trial load
-% stored in the following columns:
+% The task_load variable is a 2D or 3D matrix having WM/PM trial load and
+% actual numbers shown to participant stored in the following columns:
 % 01) trial_number:         trial number from 1:40
 % 02) WM_load:              WM load for all fourty trials
 % 03) PM_load:              PM load for all fourty trials
+% 04) WM_numbers:           WM numbers for all fourty trials
+% 05) PM_numbers:           PM numbers for all fourty trials
 % The load is essentially the cumulative sum of numbers for a particular
 % block (WM) or till the PM trial happens (PM)
 %
@@ -122,10 +133,6 @@ function [summary_data, scores, latencies, task_load, ...
 % 'liberal':                PM trial is considered correct if the middle 
 %                           button is pressed one trial before, during the 
 %                           trial, or one trial after the actual PM trial
-% 
-% score_type can be either of the following:
-% 'score':                  scores are returned as numbers
-% 'percentage':             scores are returned as percentages
 % 
 % latency_type can be any of the following:
 % 'all':                    latency for every trial is considered
@@ -141,7 +148,6 @@ function [summary_data, scores, latencies, task_load, ...
 % MATLAB table loading warnings about variablenames are turned off 
 % 
 %% Defaults:
-% score_type:               score
 % latency_type:             all_ig_miss
 % 
 %% Author(s):
@@ -157,14 +163,6 @@ else
     num_files = size(filename, 1);
 end
 
-if ~exist('score_type', 'var') || isempty(score_type)
-    score_type = 'score';
-else
-    if ~ismember(score_type, {'score', 'percentages'})
-        error(['Unknown score_type provided: ', score_type]);
-    end
-end
-
 if ~exist('latency_type', 'var') || isempty(latency_type)
     latency_type = 'all_ig_miss';
 else
@@ -174,38 +172,48 @@ else
 end
 
 %% Get MATLAB version and suppress warning
-tmp = version('-release');
-tmp(end) = '';
-tmp = str2double(tmp);
-if tmp > 2016
+matlab_ver = version('-release');
+matlab_ver(end) = '';
+matlab_ver = str2double(matlab_ver);
+if matlab_ver > 2016
     warning('OFF', 'MATLAB:table:ModifiedAndSavedVarnames');
 else
     warning('OFF', 'MATLAB:table:ModifiedVarnames');
 end
 
 %% Initialize
-max_trials      = 40;
-summary_data    = cell(num_files, 31);
-column_names    = {'file_name', 'Score_BL', 'Score_OT', 'Score_WM', 'Score_PM', ...
-                   'Score_PM_in_PM', 'Score_PM_in_PM_Lib', 'Score_OT_in_PM',    ...
-                   'Score_WM_Query', 'Score_OT_WM', 'Score_OT_PM',              ...
-                   'RT_BL', 'RT_OT', 'RT_WM', 'RT_PM', 'RT_PM_in_PM',           ...
-                   'RT_OT_in_PM', 'RT_WM_OT', 'RT_PM_OT', 'BL_missed',          ...
-                   'OT_missed', 'WM_missed', 'PM_missed', 'BL_lt200ms',         ...
-                   'OT_lt200ms', 'WM_lt200ms', 'PM_lt200ms', 'WMOT_negative',   ...
-                   'PMOT_negative', 'score_type', 'latency_type'};
+% Maximum trials per condition is 40, 10 per block
+max_trials = 40;
 
-scores          = zeros(max_trials, 9, num_files);
-scores_desc     = {'trial_number', 'Score_BL', 'Score_OT', 'Score_WM', ...
-                   'Score_PM', 'Score_PM_in_PM', 'Score_PM_in_PM_Lib', ...
-                   'Score_OT_in_PM', 'Score_WM_Query'};
-            
-latencies       = zeros(max_trials, 7, num_files);
-latencies_desc  = {'trial_number', 'RT_BL', 'RT_OT', 'RT_WM', 'RT_PM', ...
-                   'RT_PM_in_PM', 'RT_OT_in_PM'};
+% Initialize summary_data and its header
+column_names = {'file_name', 'score_BL', 'score_OT', 'score_WM',            ...
+                'score_PM', 'score_PM_in_PM', 'score_PM_in_PM_Lib',         ...
+                'score_OT_in_PM', 'score_WM_Query', 'prnct_BL',             ...
+                'prnct_OT', 'prnct_WM', 'prnct_PM', 'prnct_PM_in_PM',       ...
+                'prnct_PM_in_PM_Lib', 'prnct_OT_in_PM', 'prnct_WM_Query',   ...
+                'RT_BL', 'RT_OT', 'RT_WM', 'RT_PM', 'RT_PM_in_PM',          ...
+                'RT_OT_in_PM', 'Missed_BL', 'Missed_OT', 'Missed_WM',       ...
+                'Missed_PM', 'BL_lt200ms', 'OT_lt200ms', 'WM_lt200ms',      ...
+                'PM_lt200ms', 'num_PM_in_PM_trials', 'num_OT_in_PM_trials', ...
+                'score_OT_WM', 'score_OT_PM', 'RT_WM_OT', 'RT_PM_OT',       ...
+                'WMOT_negative', 'PMOT_negative', 'latency_type'};
+summary_data = cell(num_files, length(column_names));
 
-task_load       = zeros(max_trials, 3, num_files);
-task_load_desc  = {'trial_number', 'WM_load', 'PM_load'};
+% Initialize scores and its header
+scores_desc = {'trial_number', 'score_BL', 'score_OT', 'score_WM', ...
+               'score_PM', 'score_PM_in_PM', 'score_PM_in_PM_Lib', ...
+               'score_OT_in_PM', 'score_WM_Query'};
+scores      = zeros(max_trials, length(scores_desc), num_files);
+
+% Initialize latencies and its header
+latencies_desc = {'trial_number', 'RT_BL', 'RT_OT', 'RT_WM', 'RT_PM', ...
+                  'RT_PM_in_PM', 'RT_OT_in_PM'};
+latencies      = zeros(max_trials, length(latencies_desc), num_files);
+
+% Initialize task_load and its header
+task_load_desc = {'trial_number', 'WM_load', 'PM_load', ...
+                  'WM_all_numbers', 'PM_all_numbers'};
+task_load      = zeros(max_trials, length(task_load_desc), num_files);
 
 %% Working on each file
 for files = 1:num_files
@@ -316,19 +324,19 @@ for files = 1:num_files
     % Number of trials with RT > 0 ms and <= 200 ms
     % ---------------------------------------------
     % BL
-    summary_data{files,24} = length(nonzeros(data.probe_RT > 0 ...
+    summary_data{files,28} = length(nonzeros(data.probe_RT > 0 ...
                                    & data.probe_RT <= 200      ...
                                    & strcmpi(data.BlockCondition, 'BLTask')));
     % OT
-    summary_data{files,25} = length(nonzeros(data.probe_RT > 0 ...
+    summary_data{files,29} = length(nonzeros(data.probe_RT > 0 ...
                                    & data.probe_RT <= 200      ...
                                    & strcmpi(data.BlockCondition, 'OTTask')));
     % WM
-    summary_data{files,26} = length(nonzeros(data.probe_RT > 0 ...
+    summary_data{files,30} = length(nonzeros(data.probe_RT > 0 ...
                                    & data.probe_RT <= 200      ...
                                    & strcmpi(data.BlockCondition, 'WMTask')));
     % PM
-    summary_data{files,27} = length(nonzeros(data.probe_RT > 0 ...
+    summary_data{files,31} = length(nonzeros(data.probe_RT > 0 ...
                                    & data.probe_RT <= 200      ...
                                    & strcmpi(data.BlockCondition, 'PMTask')));
                                    
@@ -450,161 +458,166 @@ for files = 1:num_files
     
     % Compiling scores
     % ----------------
-    if strcmpi(score_type, 'score')
-        % BL score
-        summary_data{files,2} = sum(scores(:,2,files),'omitnan');
-        % OT score
-        summary_data{files,3} = sum(scores(:,3,files),'omitnan');
-        % WM score
-        summary_data{files,4} = sum(scores(:,4,files),'omitnan');
-        % PM score
-        summary_data{files,5} = sum(scores(:,5,files),'omitnan');
-        % PM in PM score (precise)
-        summary_data{files,6} = sum(scores(:,6,files),'omitnan');
-        % PM in PM score (liberal)
-        summary_data{files,7} = sum(scores(:,7,files),'omitnan');
-        % OT in PM score
-        summary_data{files,8} = sum(scores(:,8,files),'omitnan');
-        % WM query score
-        summary_data{files,9} = sum(scores(:,9,files),'omitnan');
-    else
-        % BL score
-        summary_data{files,2} = sum(scores(:,2,files),'omitnan')/max_trials*100;
-        % OT score
-        summary_data{files,3} = sum(scores(:,3,files),'omitnan')/max_trials*100;
-        % WM score
-        summary_data{files,4} = sum(scores(:,4,files),'omitnan')/max_trials*100;
-        % PM score
-        summary_data{files,5} = sum(scores(:,5,files),'omitnan')/max_trials*100;
-        % PM in PM score (precise)
-        summary_data{files,6} = sum(scores(:,6,files),'omitnan')/num_PM_trials*100;
-        % PM in PM score (liberal)
-        summary_data{files,7} = sum(scores(:,7,files),'omitnan')/num_PM_trials*100;
-        % OT in PM score
-        summary_data{files,8} = sum(scores(:,8,files),'omitnan')/num_OT_trials*100;
-        % WM query score
-        summary_data{files,9} = sum(scores(:,9,files),'omitnan')/num_query_trials*100;
-    end
+    % BL score
+    summary_data{files,2} = sum(scores(:,2,files),'omitnan');
+    % OT score
+    summary_data{files,3} = sum(scores(:,3,files),'omitnan');
+    % WM score
+    summary_data{files,4} = sum(scores(:,4,files),'omitnan');
+    % PM score
+    summary_data{files,5} = sum(scores(:,5,files),'omitnan');
+    % PM in PM score (precise)
+    summary_data{files,6} = sum(scores(:,6,files),'omitnan');
+    % PM in PM score (liberal)
+    summary_data{files,7} = sum(scores(:,7,files),'omitnan');
+    % OT in PM score
+    summary_data{files,8} = sum(scores(:,8,files),'omitnan');
+    % WM query score
+    summary_data{files,9} = sum(scores(:,9,files),'omitnan');
+    
+    % Compiling percentages
+    % ---------------------
+    % percentage BL score
+    summary_data{files,10} = sum(scores(:,2,files),'omitnan')/max_trials*100;
+    % percentage OT score
+    summary_data{files,11} = sum(scores(:,3,files),'omitnan')/max_trials*100;
+    % percentage WM score
+    summary_data{files,12} = sum(scores(:,4,files),'omitnan')/max_trials*100;
+    % percentage PM score
+    summary_data{files,13} = sum(scores(:,5,files),'omitnan')/max_trials*100;
+    % percentage PM in PM score (precise)
+    summary_data{files,14} = sum(scores(:,6,files),'omitnan')/num_PM_trials*100;
+    % percentage PM in PM score (liberal)
+    summary_data{files,15} = sum(scores(:,7,files),'omitnan')/num_PM_trials*100;
+    % percentage OT in PM score
+    summary_data{files,16} = sum(scores(:,8,files),'omitnan')/num_OT_trials*100;
+    % percentage WM query score
+    summary_data{files,17} = sum(scores(:,9,files),'omitnan')/num_query_trials*100;
+    
     % OT - WM score
-    summary_data{files,10} = summary_data{files,3} - summary_data{files,4};
+    summary_data{files,34} = summary_data{files,3} - summary_data{files,4};
     % OT - PM score
-    summary_data{files,11} = summary_data{files,3} - summary_data{files,5};
+    summary_data{files,35} = summary_data{files,3} - summary_data{files,5};
     
     % Compiling reaction time
     % -----------------------
     switch latency_type
         case 'all'
             % RT BL
-            summary_data{files,12} = mean(latencies(:,2,files));
+            summary_data{files,18} = mean(latencies(:,2,files));
             % RT OT
-            summary_data{files,13} = mean(latencies(:,3,files));
+            summary_data{files,19} = mean(latencies(:,3,files));
             % RT WM
-            summary_data{files,14} = mean(latencies(:,4,files));
+            summary_data{files,20} = mean(latencies(:,4,files));
             % RT PM
-            summary_data{files,15} = mean(latencies(:,5,files));
+            summary_data{files,21} = mean(latencies(:,5,files));
             % RT PM in PM
-            summary_data{files,16} = mean(latencies(PM_trial_locations,5,files));
+            summary_data{files,22} = mean(latencies(PM_trial_locations,5,files));
             % RT OT in PM
             tmp = zeros(40,1);
             tmp(PM_trial_locations) = 1;
-            summary_data{files,17} = mean(latencies(~tmp,5,files));
+            summary_data{files,23} = mean(latencies(~tmp,5,files));
             % RT WM - RT OT
-            summary_data{files,18} = summary_data{files,14} - summary_data{files,13};
+            summary_data{files,36} = summary_data{files,20} - summary_data{files,19};
             % RT PM - RT OT
-            summary_data{files,19} = summary_data{files,15} - summary_data{files,13};
+            summary_data{files,37} = summary_data{files,21} - summary_data{files,19};
             
         case 'all_ig_miss'
             % Convert all zero values to NaN
             temp_latencies = squeeze(latencies(:,:,files));
             temp_latencies(temp_latencies==0) = NaN;
             % RT BL
-            summary_data{files,12} = mean(temp_latencies(:,2),'omitnan');
+            summary_data{files,18} = mean(temp_latencies(:,2),'omitnan');
             % RT OT
-            summary_data{files,13} = mean(temp_latencies(:,3),'omitnan');
+            summary_data{files,19} = mean(temp_latencies(:,3),'omitnan');
             % RT WM
-            summary_data{files,14} = mean(temp_latencies(:,4),'omitnan');
+            summary_data{files,20} = mean(temp_latencies(:,4),'omitnan');
             % RT PM
-            summary_data{files,15} = mean(temp_latencies(:,5),'omitnan');
+            summary_data{files,21} = mean(temp_latencies(:,5),'omitnan');
             % RT PM in PM
-            summary_data{files,16} = mean(temp_latencies(PM_trial_locations,5),'omitnan');
+            summary_data{files,22} = mean(temp_latencies(PM_trial_locations,5),'omitnan');
             % RT OT in PM
             tmp = zeros(40,1);
             tmp(PM_trial_locations) = 1;
-            summary_data{files,17} = mean(temp_latencies(~tmp,5),'omitnan');
+            summary_data{files,23} = mean(temp_latencies(~tmp,5),'omitnan');
             % RT WM - RT OT
-            summary_data{files,18} = summary_data{files,14} - summary_data{files,13};
+            summary_data{files,36} = summary_data{files,20} - summary_data{files,19};
             % RT PM - RT OT
-            summary_data{files,19} = summary_data{files,15} - summary_data{files,13};
+            summary_data{files,37} = summary_data{files,21} - summary_data{files,19};
             
         case 'correct'
             % Only consider correct values
             % RT BL
-            summary_data{files,12} = mean(latencies(scores(:,2,files)==1,2,files));
+            summary_data{files,18} = mean(latencies(scores(:,2,files)==1,2,files));
             % RT OT
-            summary_data{files,13} = mean(latencies(scores(:,3,files)==1,3,files));
+            summary_data{files,19} = mean(latencies(scores(:,3,files)==1,3,files));
             % RT WM
-            summary_data{files,14} = mean(latencies(scores(:,4,files)==1,4,files));
+            summary_data{files,20} = mean(latencies(scores(:,4,files)==1,4,files));
             % RT PM
-            summary_data{files,15} = mean(latencies(scores(:,5,files)==1,5,files));
+            summary_data{files,21} = mean(latencies(scores(:,5,files)==1,5,files));
             % RT PM in PM
-            summary_data{files,16} = mean(latencies(scores(PM_trial_locations,5,files)==1,5,files));
+            summary_data{files,22} = mean(latencies(scores(PM_trial_locations,5,files)==1,5,files));
             % RT OT in PM
             tmp = zeros(40,1);
             tmp(PM_trial_locations) = 1;
-            summary_data{files,17} = mean(latencies(scores(~tmp,5,files)==1,5,files));
+            summary_data{files,23} = mean(latencies(scores(~tmp,5,files)==1,5,files));
             % RT WM - RT OT
-            summary_data{files,18} = summary_data{files,14} - summary_data{files,13};
+            summary_data{files,36} = summary_data{files,20} - summary_data{files,19};
             % RT PM - RT OT
-            summary_data{files,19} = summary_data{files,15} - summary_data{files,13};
+            summary_data{files,37} = summary_data{files,21} - summary_data{files,19};
     end
     
     % Missed trials
     % -------------
     % BL
-    summary_data{files,20} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
+    summary_data{files,24} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
                                     data.BlockCondition, 'BLTask')))));
     % Correct for trials with RT > 0 and < = 200 ms
-    if summary_data{files,24} > 0
-        summary_data{files,20} = summary_data{files,20}-summary_data{files,24};
+    if summary_data{files,28} > 0
+        summary_data{files,24} = summary_data{files,24}-summary_data{files,28};
     end
     
     % OT
-    summary_data{files,21} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
+    summary_data{files,25} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
                                     data.BlockCondition, 'OTTask')))));
     % Correct for trials with RT > 0 and < = 200 ms
-    if summary_data{files,25} > 0
-        summary_data{files,21} = summary_data{files,21}-summary_data{files,25};
+    if summary_data{files,29} > 0
+        summary_data{files,25} = summary_data{files,25}-summary_data{files,29};
     end
     
     % WM
-    summary_data{files,22} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
+    summary_data{files,26} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
                                     data.BlockCondition, 'WMTask')))));
     % Correct for trials with RT > 0 and < = 200 ms
-    if summary_data{files,26} > 0
-        summary_data{files,22} = summary_data{files,22}-summary_data{files,26};
+    if summary_data{files,30} > 0
+        summary_data{files,26} = summary_data{files,26}-summary_data{files,30};
     end
     
     % PM
-    summary_data{files,23} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
+    summary_data{files,27} = length(nonzeros(isnan(data.probe_RESP(strcmpi(...
                                     data.BlockCondition, 'PMTask')))));
     % Correct for trials with RT > 0 and < = 200 ms
-    if summary_data{files,27} > 0
-        summary_data{files,23} = summary_data{files,23}-summary_data{files,27};
+    if summary_data{files,31} > 0
+        summary_data{files,27} = summary_data{files,27}-summary_data{files,31};
     end
+    
+    % Number of trials in PM condition
+    % --------------------------------
+    summary_data{files,32} = num_PM_trials;
+    summary_data{files,33} = num_OT_trials;
 
     % Number of trials leading to negative values
     % -------------------------------------------
     % WM-OT
-    summary_data{files,28} = length(nonzeros(latencies(:,4,files) - ...
+    summary_data{files,38} = length(nonzeros(latencies(:,4,files) - ...
                                     latencies(:,3,files) < 0));
     % PM-OT
-    summary_data{files,29} = length(nonzeros(latencies(:,5,files) - ...
+    summary_data{files,39} = length(nonzeros(latencies(:,5,files) - ...
                                     latencies(:,3,files) < 0));
 
-    % Other details
-    % -------------
-    summary_data{files,30} = score_type;
-    summary_data{files,31} = latency_type;
+    % Latency type
+    % ------------
+    summary_data{files,40} = latency_type;
     
     %% Compiling information for task_load variable
     % Fill in trial numbers
@@ -619,6 +632,7 @@ for files = 1:num_files
                             cumsum(all_numbers(11:20)); ...
                             cumsum(all_numbers(21:30)); ...
                             cumsum(all_numbers(31:40));];
+    task_load(:,4,files) = all_numbers;
     
     % Prospective memory load per trial
     % ---------------------------------
@@ -627,31 +641,54 @@ for files = 1:num_files
     tmp = 1:max_trials;
     restart_locations = tmp(strcmpi(data.bckg(...
                         strcmpi(data.BlockCondition, 'PMTask')), 'Restart'));
-    
+    restart_loc_block = [restart_locations(1:3);    ...
+                         restart_locations(4:6)-10; ...
+                         restart_locations(7:9)-20; ...
+                         restart_locations(10:12)-30];
+    all_nums_select   = [all_numbers(1:10)';  ...
+                         all_numbers(11:20)'; ...
+                         all_numbers(21:30)'; ...
+                         all_numbers(31:40)'];
+
     % Get cumulative sum
-    cum_pm_sum = zeros(max_trials,1);
-    counter    = 1;
-    for pm_trials = 1:length(restart_locations)
-        cum_pm_sum(counter:restart_locations(pm_trials)) = ...
-            cumsum(all_numbers(counter:restart_locations(pm_trials)));
-        counter = restart_locations(pm_trials)+1;
-        if counter == max_trials
-            cum_pm_sum(counter) = all_numbers(counter);
+    % 4 blocks, 3 PM trials per block, 10 trials per block overall
+    cum_pm_sum = zeros(4,10);
+    for blk = 1:4
+        counter = 1;
+        for pm_trials = 1:3
+            cum_pm_sum(blk,counter:restart_loc_block(blk,pm_trials)) = ...
+                cumsum(all_nums_select(blk,counter:restart_loc_block(blk,pm_trials)));
+            counter = restart_loc_block(blk,pm_trials)+1;
+            if pm_trials == 3 && restart_loc_block(blk,pm_trials) < 10
+                cum_pm_sum(blk,restart_loc_block(blk,pm_trials)+1:end) = ...
+                    cumsum(all_nums_select(blk,restart_loc_block(blk,pm_trials)+1:end));
+            end
         end
     end
+    tmp = cum_pm_sum';
+    cum_pm_sum_all = tmp(:);
     
     % Assign to task_load
-    task_load(:,3,files) = [cum_pm_sum(1:10);  ...
-                            cum_pm_sum(11:20); ...
-                            cum_pm_sum(21:30); ...
-                            cum_pm_sum(31:40);];
+    task_load(:,3,files) = [cum_pm_sum_all(1:10);  ...
+                            cum_pm_sum_all(11:20); ...
+                            cum_pm_sum_all(21:30); ...
+                            cum_pm_sum_all(31:40);];
+    task_load(:,5,files) = all_numbers;
 
 end
 %% Convert to table
-summary_data = cell2table(summary_data,'VariableNames', column_names);
+summary_data = cell2table(summary_data, 'VariableNames', column_names);
+
+%% Write table as csv file
+writetable(summary_data, ['summary_PM_', datestr(now, 'ddmmmyyyy'), '.csv']);
+
+%% Save all variables
+save(['behavioural_data_PM_', datestr(now, 'ddmmmyyyy'), '.mat'],       ...
+     'filename', 'latency_type', 'summary_data', 'scores', 'latencies', ... 
+     'task_load', 'scores_desc', 'latencies_desc', 'task_load_desc');
 
 %% Turn warnings back on
-if tmp > 2016
+if matlab_ver > 2016
     warning('ON', 'MATLAB:table:ModifiedAndSavedVarnames');
 else
     warning('ON', 'MATLAB:table:ModifiedVarnames');
