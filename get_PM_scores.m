@@ -321,6 +321,36 @@ for files = 1:num_files
     
     %% Gathering raw scores and latency values
     
+    % WM condition query scores
+    % -------------------------
+    % For Siemens Skyra, return NaNs for WM Query as the response was vocal
+    if ~philips
+        scores(:,9,files) = NaN;
+    else
+        % Get all WM Query correct responses
+        loc        = ~isnan(data.CorrectResponse);
+        trial_resp = data.TotalQ_RESP(loc);
+        corr_resp  = data.CorrectResponse(loc);
+        % Apply WM correction, if needed
+        if correct_WM
+            corr_resp(1) = 9;
+            corr_resp(2) = 7;
+            corr_resp(3) = 9;
+        end
+        scores(trial_resp==corr_resp,9,files) = 1;
+        % Pad remaining spots with NaN
+        scores(5:end,9,files) = NaN;
+    end
+        
+    % Determine if WM has 11 trials rather than 10; if yes, remove every 
+    % 11th trial from only the WM condition (delete from data variable)
+    % For Philips data, the Query slide is part of the WM block, 
+    % leading to the 11th trial
+    if philips
+        loc_WM_Query = data.SubTrial==11;
+        data(loc_WM_Query,:) = [];
+    end
+    
     % Number of trials with RT > 0 ms and <= 200 ms
     % ---------------------------------------------
     % BL
@@ -414,8 +444,12 @@ for files = 1:num_files
     PM_direct(incorrect(prior_resp)) = 1;
     % Check, for remaining incorrect responses, if participant pressed the 
     % middle button one trial after; treat them as correct response
+    % Additionally, check if PM trial is at the end of block
+    % (PM_trial_locations == 40) in which case there is no post checking
     incorrect  = find(~PM_direct);
-    post_resp  = trial_resp(PM_trial_locations(~PM_direct)+1) == middle_button;
+    tmp_post   = PM_trial_locations(~PM_direct);
+    tmp_post(tmp_post==40) = [];
+    post_resp  = trial_resp(tmp_post+1) == middle_button;
     PM_direct(incorrect(post_resp)) = 1;
     % PM performance score (liberal)
     scores(PM_trial_locations,7,files) = PM_direct;
@@ -431,28 +465,7 @@ for files = 1:num_files
     % Convert PM trial scores and latencies to NaN
     scores(PM_trial_locations,8,files)    = NaN;
     latencies(PM_trial_locations,7,files) = NaN;
-    
-    % WM condition query scores
-    % -------------------------
-    % For Siemens Skyra, return NaNs for WM Query as the response was vocal
-    if ~philips
-        scores(:,9,files) = NaN;
-    else
-        % Get all WM Query correct responses
-        loc        = ~isnan(data.TotalQ_CRESP);
-        trial_resp = data.TotalQ_RESP(loc);
-        corr_resp  = data.TotalQ_CRESP(loc);
-        % Apply WM correction, if needed
-        if correct_WM
-            corr_resp(1) = 9;
-            corr_resp(2) = 7;
-            corr_resp(3) = 9;
-        end
-        scores(trial_resp==corr_resp,8,files) = 1;
-        % Pad remaining spots with NaN
-        scores(5:end,9,files) = NaN;
-    end
-    
+        
     %% Compiling information for summary variable 
     summary_data{files,1} = filename{files};
     
