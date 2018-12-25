@@ -44,7 +44,7 @@ num_conditions = length(names);
 switch(task_name)
     case 'vftclassic'
         % WG-WR contrast
-        vector           = zeros(1,num_conditions);
+        vector           = zeros(num_conditions,1);
         vector(strcmpi(names, 'WG')) =  1;
         vector(strcmpi(names, 'WR')) = -1;
         con_names{1,1}   = 'WG-WR';
@@ -105,7 +105,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'OT')) =  1;
         vector(strcmpi(names, 'PM')) = -1;
-        con_names{1,4}   = {'OT-PM'};
+        con_names{1,4}   = 'OT-PM';
         con_weights{1,4} = vector;
         file_names{1,4}  = 'con_0004.nii';
         
@@ -121,7 +121,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'WM')) =  1;
         vector(strcmpi(names, 'PM')) = -1;
-        con_names{1,6}   = 'WM-WM';
+        con_names{1,6}   = 'WM-PM';
         con_weights{1,6} = vector;
         file_names{1,6}  = 'con_0006.nii';
         
