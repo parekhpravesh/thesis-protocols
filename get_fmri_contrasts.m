@@ -47,7 +47,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'WG')) =  1;
         vector(strcmpi(names, 'WR')) = -1;
-        con_names{1,1}   = {'WG-WR'};
+        con_names{1,1}   = 'WG-WR';
         con_weights{1,1} = vector;
         file_names{1,1}  = 'con_0001.nii';
         
@@ -55,7 +55,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'WR')) =  1;
         vector(strcmpi(names, 'WG')) = -1;
-        con_names{1,2}   = {'WR-WG'};
+        con_names{1,2}   = 'WR-WG';
         con_weights{1,2} = vector;
         file_names{1,2}  = 'con_0002.nii';
         
@@ -64,7 +64,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'WG')) =  1;
         vector(strcmpi(names, 'WR')) = -1;
-        con_names{1,1}   = {'WG-WR'};
+        con_names{1,1}   = 'WG-WR';
         con_weights{1,1} = vector;
         file_names{1,1}  = 'con_0001.nii';
         
@@ -72,7 +72,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'WR')) =  1;
         vector(strcmpi(names, 'WG')) = -1;
-        con_names{1,2}   = {'WR-WG'};
+        con_names{1,2}   = 'WR-WG';
         con_weights{1,2} = vector;
         file_names{1,2}  = 'con_0002.nii';
         
@@ -81,7 +81,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'PM')) =  1;
         vector(strcmpi(names, 'OT')) = -1;
-        con_names{1,1}   = {'PM-OT'};
+        con_names{1,1}   = 'PM-OT';
         con_weights{1,1} = vector;
         file_names{1,1}  = 'con_0001.nii';
         
@@ -89,7 +89,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'WM')) =  1;
         vector(strcmpi(names, 'OT')) = -1;
-        con_names{1,2}   = {'WM-OT'};
+        con_names{1,2}   = 'WM-OT';
         con_weights{1,2} = vector;
         file_names{1,2}  = 'con_0002.nii';
         
@@ -97,7 +97,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'PM')) =  1;
         vector(strcmpi(names, 'WM')) = -1;
-        con_names{1,3}   = {'PM-WM'};
+        con_names{1,3}   = 'PM-WM';
         con_weights{1,3} = vector;
         file_names{1,3}  = 'con_0003.nii';
         
@@ -113,7 +113,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'OT')) =  1;
         vector(strcmpi(names, 'WM')) = -1;
-        con_names{1,5}   = {'OT-WM'};
+        con_names{1,5}   = 'OT-WM';
         con_weights{1,5} = vector;
         file_names{1,5}  = 'con_0005.nii';
         
@@ -121,7 +121,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'WM')) =  1;
         vector(strcmpi(names, 'PM')) = -1;
-        con_names{1,6}   = {'WM-WM'};
+        con_names{1,6}   = 'WM-WM';
         con_weights{1,6} = vector;
         file_names{1,6}  = 'con_0006.nii';
         
@@ -130,7 +130,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'VA')) =  1;
         vector(strcmpi(names, 'FA')) = -1;
-        con_names{1,1}   = {'VA-FA'};
+        con_names{1,1}   = 'VA-FA';
         con_weights{1,1} = vector;
         file_names{1,1}  = 'con_0001.nii';
         
@@ -138,7 +138,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'FA')) =  1;
         vector(strcmpi(names, 'VA')) = -1;
-        con_names{1,2}   = {'FA-VA'};
+        con_names{1,2}   = 'FA-VA';
         con_weights{1,2} = vector;
         file_names{1,2}  = 'con_0002.nii';
         
@@ -147,7 +147,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'VA')) =  1;
         vector(strcmpi(names, 'FA')) = -1;
-        con_names{1,1}   = {'VA-FA'};
+        con_names{1,1}   = 'VA-FA';
         con_weights{1,1} = vector;
         file_names{1,1}  = 'con_0001.nii';
         
@@ -155,7 +155,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'FA')) =  1;
         vector(strcmpi(names, 'VA')) = -1;
-        con_names{1,2}   = {'FA-VA'};
+        con_names{1,2}   = 'FA-VA';
         con_weights{1,2} = vector;
         file_names{1,2}  = 'con_0002.nii';
         
@@ -163,7 +163,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'HA')) =  1;
         vector(strcmpi(names, 'VA')) = -1;
-        con_names{1,3}   = {'HA-VA'};
+        con_names{1,3}   = 'HA-VA';
         con_weights{1,3} = vector;
         file_names{1,3}  = 'con_0003.nii';
         
@@ -171,7 +171,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'VA')) =  1;
         vector(strcmpi(names, 'HA')) = -1;
-        con_names{1,4}   = {'VA-HA'};
+        con_names{1,4}   = 'VA-HA';
         con_weights{1,4} = vector;
         file_names{1,4}  = 'con_0004.nii';
         
@@ -179,7 +179,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'HA')) =  1;
         vector(strcmpi(names, 'FA')) = -1;
-        con_names{1,5}   = {'HA-FA'};
+        con_names{1,5}   = 'HA-FA';
         con_weights{1,5} = vector;
         file_names{1,5}  = 'con_0005.nii';
         
@@ -187,7 +187,7 @@ switch(task_name)
         vector           = zeros(1,num_conditions);
         vector(strcmpi(names, 'FA')) =  1;
         vector(strcmpi(names, 'HA')) = -1;
-        con_names{1,6}   = {'FA-HA'};
+        con_names{1,6}   = 'FA-HA';
         con_weights{1,6} = vector;
         file_names{1,6}  = 'con_0006.nii';
 end
