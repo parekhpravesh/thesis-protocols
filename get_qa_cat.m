@@ -1,24 +1,30 @@
-function get_qa_cat(xml_files, output_file)
-% Function to read CAT report XML files and extract quality assurance
-% measures, percentages, and grades into a csv file
+function get_qa_cat(files, output_file)
+% Function to read CAT report XML or .mat files and extract quality 
+% assurance measures, percentages, and grades into a csv file
 %% Inputs:
-% xml_files:        cell with full paths to XML files
+% files:            cell with full paths to XML or .mat files
 %                   (rows are filenames)
 % output_file:      filename to be used for saving results 
 %                   (optionally with full path)
 % 
 %% Output:
-% A csv file with the name specified in output_file or QA_CAT_<YYYYMMMDD> 
+% A csv file with the name specified in output_file or QA_CAT_<DDMMMYYYY> 
 % is written either in the supplied directory or pwd containing filename, 
 % quality measures for resolution, noise, and bias, weighted IQR, surface 
 % euler number, and size of topology defects. MATLAB, SPM and CAT software 
 % versions are also written out
 % 
-% CAT automatically saves the XML file as a mat file with the same filename
+% If XML files are input, CAT automatically saves the XML file as a mat 
+% file with the same filename
+% 
+% If XML files are input and full paths are not provided, MATLAB will
+% generate a warning about empty directory names
 % 
 %% Notes:
-% The function uses cat_io_xml function to read the xml file into a MATLAB
-% structure; the rest of the code relies on the grades and functions 
+% If XML files are input, the function uses cat_io_xml function to read the 
+% xml file into a MATLAB structure; 
+% 
+% The rest of the code relies on the grades and functions 
 % marks2str, mark2rps, and mark2grad defined in cat_main.m file
 % (lines 2051-2054; CAT 12.5 v1363)
 % 
@@ -34,7 +40,7 @@ function get_qa_cat(xml_files, output_file)
 % grade:            A+ to F
 % 
 %% Default:
-% output_file:      QA_CAT_YYYYMMDD.csv in pwd
+% output_file:      QA_CAT_DDMMMYYYY.csv in pwd
 % 
 %% Author(s):
 % Parekh, Pravesh
@@ -42,20 +48,20 @@ function get_qa_cat(xml_files, output_file)
 % MBIAL
 
 %% Check inputs and assign defaults
-% Check xml_files
-if ~exist('xml_files', 'var') || isempty(xml_files)
-    error('xml_files should be provided');
+% Check files
+if ~exist('files', 'var') || isempty(files)
+    error('files should be provided');
 end
 
 % Check output_file
 if ~exist('output_file', 'var') || isempty(output_file)
     % Check if full path is present in the first xml file
-    if isempty(fileparts(xml_files{1}))
+    if isempty(fileparts(files{1}))
         loc = pwd;
     else
-        loc = fileparts(xml_files{1});
+        loc = fileparts(files{1});
     end
-    output_file = fullfile(loc, ['QA_CAT_', datestr(now, 'yyyymmmdd'), '.csv']);
+    output_file = fullfile(loc, ['QA_CAT_', datestr(now, 'ddmmmyyyy'), '.csv']);
 end
 
 %% Define functions
@@ -65,7 +71,7 @@ mark2rps    = @(mark) min(100,max(0,105 - mark*10)) + isnan(mark).*mark;
 mark2grad   = @(mark) grades{min(numel(grades),max(max(isnan(mark)*numel(grades),1),round((mark+2/3)*3-3)))};
 
 %% Initialize
-num_files = length(xml_files);
+num_files = length(files);
 
 header = {'filename'; ...
           'resolution_RMS_value'; 'resolution_RMS_rps'; 'resolution_RMS_grade'; ...
@@ -79,10 +85,19 @@ measures = cell(num_files, length(header));
 
 %% Get values
 for file = 1:num_files
-    str  = cat_io_xml(xml_files{file});
+    
+    % Check if XML or mat file
+    ext  = strsplit(files{file}, '.');
+    ext  = ext{end};
+    if strcmpi(ext, 'xml')
+        str  = cat_io_xml(files{file});
+    else
+        str = load(files{file}, 'S');
+        str = str.S;
+    end
     
     % Filename
-    measures{file,1}  = xml_files{file};
+    measures{file,1}  = files{file};
     
     % Resolution
     measures{file,2}  = str.qualityratings.res_RMS;
