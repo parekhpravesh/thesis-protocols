@@ -84,7 +84,7 @@ end
 %% Load one file for initializing etc
 load(fullfile(project_path, project_name, 'results', 'preprocessing', ...
              'ROI_Subject001_Condition001.mat'), 'names', 'xyz');
-
+xyz_all = xyz;
 %% Get ROI information
 % Get all atlases specified in the project
 list_atlases = CONN_x.Setup.rois.names(logical(CONN_x.Setup.rois.multiplelabels));
@@ -147,6 +147,7 @@ for sub = 1:num_subjs
             data_reduced_at = data_reduced(roi_idx_at{atlas});
             num_rois        = length(roi_idx_at{atlas});
             roi_names       = names(roi_idx_at{atlas});
+            xyz             = xyz_all(roi_idx_at{atlas});
             
             % Get weighted time series for each ROI
             for roi = 1:num_rois
