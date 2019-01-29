@@ -1,12 +1,13 @@
-function create_conn_batch_mat(data_dir,       task_name,    anat_prefix,   ...
-                               func_prefix,    atlas_file,   outlier_loc,   ...
-                               outlier_prefix, num_par_jobs, project_name,  ...
-                               output_name,    full_bids)
+function create_conn_batch_mat(data_dir,        task_name,      list_subjs,   ...
+                               anat_prefix,     func_prefix,    atlas_file,   ...
+                               outlier_loc,     outlier_prefix, num_par_jobs, ... 
+                               project_name,    output_name,    full_bids)
 % Function to read in pre-processed data and create a mat file which can be
 % read by conn_batch
 %% Inputs:
 % data_dir:         fullpath to directory containing sub-* folders
 % task_name:        name of the task
+% list_subjs:       cell type having list of subjects to process
 % anat_prefix:      prefix for normalized skull stripped data
 % func_prefix:      prefix for smoothed normalized functional data
 % atlas_file:       fullpath(s) to an/multiple atlas file(s)
@@ -85,13 +86,14 @@ function create_conn_batch_mat(data_dir,       task_name,    anat_prefix,   ...
 % 
 %% Defaults:
 % task_name:        'rest'
+% list_subjs:       'all'
 % anat_prefix:      'wc0'
 % func_prefix:      'swau'
 % atlas_file:       'atlas.nii' (from Conn)
 % outlier_loc:      ''
 % outlier_prefix:   outliers.mat
 % num_par_jobs:     0
-% project_name:     conn_<task_name>_DDMMMYYYY.mat
+% project_name:     conn_<task_name>_DDMMMYYYY
 % output_name:      batch_<task_name>_<DDMMMYYYY>.mat
 % full_bids:        'yes'
 % 
@@ -121,6 +123,11 @@ else
     end
 end
 
+% Check list_subj
+if ~exist('list_subjs', 'var') || isempty(list_subjs)
+    list_subjs = 'all';
+end
+
 % Check anat_prefix
 if ~exist('anat_prefix', 'var') || isempty(anat_prefix)
     anat_prefix = 'wc0';
@@ -134,6 +141,7 @@ end
 % Check atlas_file
 if ~exist('atlas_file', 'var') || isempty(atlas_file)
     atlas_file = fullfile(fileparts(which('conn')), 'rois', 'atlas.nii');
+    num_atlas  = 1;
 else
     if ischar(atlas_file)
         atlas_file = {atlas_file};
@@ -163,7 +171,7 @@ end
 
 % Check project_name
 if ~exist('project_name', 'var') || isempty(project_name)
-    project_name = ['conn_', task_name, '_', datestr(now, 'ddmmmyyyy'), '.mat'];
+    project_name = ['conn_', task_name, '_', datestr(now, 'ddmmmyyyy')];
 end
 
 % Check output_name
@@ -187,11 +195,13 @@ else
 end
 
 %% Make list of subjects
-cd(data_dir);
-list_subjs = dir('sub-*');
-list_subjs = struct2cell(list_subjs);
-list_subjs(2:end,:) = [];
-list_subjs = list_subjs';
+if strcmpi(list_subjs, 'all')
+    cd(data_dir);
+    list_subjs = dir('sub-*');
+    list_subjs = struct2cell(list_subjs);
+    list_subjs(2:end,:) = [];
+    list_subjs = list_subjs';
+end
 num_subjs  = length(list_subjs);
 
 %% Get task design and TR
