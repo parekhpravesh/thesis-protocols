@@ -300,6 +300,8 @@ if strcmpi(atlas_name, 'all')
 else
     if sum(ismember(atlas_name, list_atlases)) ~= size(atlas_name,1)
         error('Could not find one or more of specified atlases');
+    else
+        list_atlases(~ismember(list_atlases, atlas_name)) = [];
     end
 end
 
