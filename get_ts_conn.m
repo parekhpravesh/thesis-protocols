@@ -4,17 +4,17 @@ function get_ts_conn(project_name, atlas_name, output_dir)
 %% Inputs:
 % project_name: fullpath to the conn project (.mat file)
 % atlas_name:   name of the atlas file to get time series from
-% output_dir:   fullpath to where results should be saved aved
+% output_dir:   fullpath to where results should be saved
 % 
 %% Output:
 % A sub-folder named <atlas_name> is made in the folder 'time_series' in
 % output_dir where condition specific time series is written out as .mat 
-% files; contained within each of these is the reduced time series for that
-% condition, the HRF weights for the time series, the weighted time series,
-% the names of the ROIs, and the xyz coordinates of the centroid of each of
-% the ROIs
+% files in condition specific sub-folders; contained within each of these 
+% is the reduced time series for that condition, the HRF weights for the 
+% time series, the weighted time series, the names of the ROIs, and the 
+% xyz coordinates of the centroid of each of the ROIs
 %
-%% Default:
+%% Defaults:
 % atlas_name:   all multiple label ROIs specified in the project setup
 % output_dir:   project path
 % 
@@ -64,11 +64,7 @@ end
 
 % Check output_dir
 if ~exist('output_dir', 'var') || isempty(output_dir)
-    output_dir = project_path;
-else
-    if ~exist(output_dir, 'dir')
-        mkdir(output_dir);
-    end
+    output_dir = fullfile(project_path, 'time_series');
 end
 
 %% Get subject information
@@ -85,6 +81,7 @@ end
 load(fullfile(project_path, project_name, 'results', 'preprocessing', ...
              'ROI_Subject001_Condition001.mat'), 'names', 'xyz');
 xyz_all = xyz;
+
 %% Get ROI information
 % Get all atlases specified in the project
 list_atlases = CONN_x.Setup.rois.names(logical(CONN_x.Setup.rois.multiplelabels));
@@ -112,13 +109,18 @@ cond_names = CONN_x.Setup.conditions.allnames;
 cond_nums  = length(cond_names);
 
 %% Prepare output directory
-if ~exist(fullfile(output_dir, 'time_series'), 'dir')
-    mkdir(fullfile(output_dir, 'time_series'));
+if ~exist(output_dir, 'dir')
+    mkdir(output_dir);
 end
 
 for atlas = 1:atlases_num
-    if ~exist(fullfile(output_dir, 'time_series', atlas_name{atlas}), 'dir')
-        mkdir(fullfile(output_dir, 'time_series', atlas_name{atlas}));
+    if ~exist(fullfile(output_dir, atlas_name{atlas}), 'dir')
+        mkdir(fullfile(output_dir, atlas_name{atlas}));
+    end
+    for con = 1:cond_nums
+        if ~exist(fullfile(output_dir, atlas_name{atlas}, cond_names{con}), 'dir')
+            mkdir(fullfile(output_dir, atlas_name{atlas}, cond_names{con}));
+        end
     end
 end
 
@@ -156,10 +158,11 @@ for sub = 1:num_subjs
             end
             
             % Save condition specific time series
-            save_name = fullfile(output_dir, 'time_series',                ...
-                                 atlas_name{atlas}, ['TS_',                ...
-                                 atlas_name{atlas}, '_', cond_names{con},  ...
-                                 '_', list_subjs{sub}, '.mat']);
+            save_name = fullfile(output_dir, atlas_name{atlas}, ...
+                                 cond_names{con}, ['TS_',       ...
+                                 atlas_name{atlas}, '_',        ...
+                                 cond_names{con}, '_',          ...
+                                 list_subjs{sub}, '.mat']);
             save(save_name, 'weighted_ts', 'data_reduced_at', 'w_reduced', ...
                             'roi_names', 'xyz');
         end
