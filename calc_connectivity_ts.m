@@ -95,7 +95,7 @@ end
 if ~exist('output_dir', 'var') || isempty(output_dir)
     cd(ts_dir);
     cd('..');
-    output_dir = pwd;
+    output_dir = fullfile(pwd, ['connectivity_', conn_type]);
 end
 
 %% Get atlases
@@ -130,36 +130,15 @@ if ischar(atlas_name)
 end
 num_atlases = size(atlas_name, 1);
 
-%% Get all files for each atlas
-cd(ts_dir);
-file_list  = cell(1,num_atlases);
-parse_list = cell(1,num_atlases);
-
+%% Get all conditions for each atlas
+cond_list = cell(1,num_atlases);
 for atlas = 1:num_atlases
     cd(fullfile(ts_dir, atlas_name{atlas}));
-    tmp_list  = dir('*.mat');
-    tmp_list  = struct2cell(tmp_list);
-    tmp_list(2:end,:)   = [];
-    file_list{:,atlas}  = tmp_list';
-    parse_list{:,atlas} = cellfun(@(x) strsplit(x, '_'),                  ...
-                          regexprep(file_list{:,atlas},                   ...
-                          {'TS_', [atlas_name{atlas}, '_'], '.mat'}, ''), ...
-                          'UniformOutput', false);
-end
-
-%% Compile condition list and subject list
-cond_list     = cell(1,num_atlases);
-subj_list     = cell(1,num_atlases);
-tmp_cond_list = cell(1,num_atlases);
-tmp_subj_list = cell(1,num_atlases);
-
-for atlas = 1:num_atlases
-    for files = 1:length(parse_list{1,atlas})
-        tmp_cond_list{files,atlas} = parse_list{1,atlas}{files,1}{1};
-        tmp_subj_list{files,atlas} = parse_list{1,atlas}{files,1}{2};
-    end
-    cond_list{:,atlas} = unique(tmp_cond_list(:,atlas));
-    subj_list{:,atlas} = unique(tmp_subj_list(:,atlas));
+    tmp_list = dir;
+    tmp_list = struct2cell(tmp_list);
+    tmp_list(2:end,:) = [];
+    tmp_list(ismember(tmp_list, {'.', '..'})) = [];
+    cond_list{:,atlas} = tmp_list';
 end
 
 % Check if cond_name exist in cond_list
@@ -173,55 +152,81 @@ for atlas = 1:num_atlases
     end
 end
 
-% Check if subj_id exist in subj_list
+%% Get all subject IDs for each atlas for given condition(s)
+cd(ts_dir);
+subj_list  = cell(1,num_atlases);
+
 for atlas = 1:num_atlases
-    if ~strcmpi(subj_id, 'all')
-        if ~ismember(subj_list{:,atlas}, subj_id)
-            error('Cannot find one or more subjects');
-        else
-            subj_list{:,atlas} = subj_id;
+    for cond = 1:length(cond_list{1,atlas})
+        cd(fullfile(ts_dir, atlas_name{atlas}, cond_list{1,atlas}{cond}));
+        tmp_list = dir(['TS_', atlas_name{atlas}, '_', ...
+                        cond_list{1,atlas}{cond}, '_*.mat']);
+        tmp_list  = struct2cell(tmp_list);
+        tmp_list(2:end,:) = [];
+        tmp_list = tmp_list';
+        
+        % Get subject IDs for this condition
+        subj_list{1,atlas}{1,cond} = regexprep(tmp_list, {'TS_',                ...
+                                              [atlas_name{atlas}, '_'],         ...
+                                              [cond_list{1,atlas}{cond}, '_'],  ...
+                                              '.mat'}, '');
+                                          
+        % Check if subj_id exist in subj_list
+        if ~strcmpi(subj_id, 'all')
+            if ~ismember(subj_id, subj_list{1,atlas}{1,cond})
+                error(['Could not find one or more subjects in ', ...
+                       cond_list{1,atlas}{cond}]);
+            else
+                % Remove subjects which are not needed 
+                subj_list{1,atlas}{1,cond}(~ismember(subj_list{1,atlas}{1,cond}, subj_id)) = [];
+            end
         end
     end
 end
 
+%% Variables for case of merging atlases
+% Get all subjects which exist across atlases
+tmp_list      = vertcat(subj_list{:});
+tmp_list      = vertcat(tmp_list{:});
+subj_list_all = unique(tmp_list);
+
+% Get all conditions which exist across atlases
+tmp_list      = vertcat(cond_list{:});
+cond_list_all = unique(tmp_list);
+    
+
 %% Prepare output directory
-if ~exist(fullfile(output_dir, ['connectivity_', conn_type]), 'dir')
-    mkdir(fullfile(output_dir, ['connectivity_', conn_type]));
+if ~exist(output_dir, 'dir')
+    mkdir(output_dir);
 end
 
 if ~merge
     for atlas = 1:num_atlases
-        if ~exist(fullfile(output_dir, ['connectivity_', conn_type], ...
-                           atlas_name{atlas}), 'dir')
-            mkdir(fullfile(output_dir, ['connectivity_', conn_type], ...
-                           atlas_name{atlas}));
+        if ~exist(fullfile(output_dir, atlas_name{atlas}), 'dir')
+            mkdir(fullfile(output_dir, atlas_name{atlas}));
+        end
+        for cond = 1:length(cond_list{1,atlas})
+            if ~exist(fullfile(output_dir, atlas_name{atlas}, ...
+                               cond_list{1,atlas}{cond}), 'dir')
+                mkdir(fullfile(output_dir, atlas_name{atlas}, ...
+                               cond_list{1,atlas}{cond}));
+            end
         end
     end
 else
-    if ~exist(fullfile(output_dir, ['connectivity_', conn_type], ...
-                       'merged-atlases'), 'dir')
-       mkdir(fullfile(output_dir, ['connectivity_', conn_type], ...
-                       'merged-atlases'));
+    if ~exist(fullfile(output_dir, 'merged-atlases'), 'dir')
+        mkdir(fullfile(output_dir, 'merged-atlases'));
+    end
+    for cond = 1:length(cond_list_all)
+        if ~exist(fullfile(output_dir, 'merged-atlases', cond_list_all{cond}), 'dir')
+            mkdir(fullfile(output_dir, 'merged-atlases', cond_list_all{cond}));
+        end
     end
 end
 
 %% Calculate connectivity
 % Handle special case of merging atlases
 if merge
-    % Get all subjects which exist across atlases
-    if size(subj_list,2) > 1
-        subj_list_all = intersect(subj_list{:});
-    else
-        subj_list_all = subj_list;
-    end
-    
-    % Get all conditions which exist across atlases
-    if size(cond_list,2) > 1
-        cond_list_all = intersect(cond_list{:});
-    else
-        cond_list_all = cond_list;
-    end
-    
     for sub = 1:length(subj_list_all)
             for cond = 1:length(cond_list_all)
                 
@@ -232,7 +237,7 @@ if merge
                 
                 for atlas = 1:num_atlases
                     % Load variable
-                    load(fullfile(ts_dir, atlas_name{atlas},                 ...
+                    load(fullfile(ts_dir, atlas_name{atlas}, cond_list_all{cond},                ...
                         ['TS_', atlas_name{atlas}, '_', cond_list_all{cond}, ...
                         '_', subj_list_all{sub}, '.mat']), 'weighted_ts',    ...
                         'xyz', 'roi_names');
@@ -251,6 +256,7 @@ if merge
                 notes.atlas     = atlas_name;
                 notes.conn_tpye = conn_type;
                 notes.ts_type   = 'HRF weighted TS';
+                notes.cond_name = cond_list_all{cond};
                 
                 % Initialize
                 conn_mat = zeros(length(roi_names));
@@ -268,10 +274,11 @@ if merge
                 end
                 
                 % Save variables
-                save_name = fullfile(output_dir, ['connectivity_', conn_type], ...
-                                    'merged-atlases', ['conn_mat_', conn_type, ...
-                                    '_merged-atlases_',                        ...
-                                    cond_list_all{cond}, '_',                  ...
+                save_name = fullfile(output_dir, 'merged-atlases', ...
+                                     cond_list_all{cond},          ...
+                                    ['conn_mat_', conn_type,       ...
+                                    '_merged-atlases_',            ...
+                                    cond_list_all{cond}, '_',      ...
                                     subj_list_all{sub}, '.mat']);
                save(save_name, 'conn_mat', 'p_vals', 'roi_names', 'xyz', 'notes');
             end
@@ -279,14 +286,15 @@ if merge
 else
     % All other cases where atlases do not need to be merged
     for atlas = 1:num_atlases
-        for sub = 1:length(subj_list{1,atlas})
-            for cond = 1:length(cond_list{1,atlas})
+        for cond = 1:length(cond_list{1,atlas})
+            for sub = 1:length(subj_list{1,atlas}{1,cond})
                 
                 % Load variable
-                load(fullfile(ts_dir, atlas_name{atlas},               ...
-                    ['TS_', atlas_name{atlas}, '_',                    ...
-                    cond_list{1,atlas}{cond},  '_',                    ...
-                    subj_list{1,atlas}{sub}, '.mat']),                 ...
+                load(fullfile(ts_dir, atlas_name{atlas}, ...
+                    cond_list{1,atlas}{cond},            ...
+                    ['TS_', atlas_name{atlas}, '_',      ...
+                    cond_list{1,atlas}{cond},  '_',      ...
+                    subj_list{1,atlas}{cond}{sub}, '.mat']),   ...
                     'weighted_ts', 'xyz', 'roi_names');
                 
                 % Initialize
@@ -297,6 +305,7 @@ else
                 notes.atlas     = atlas_name{atlas};
                 notes.conn_tpye = conn_type;
                 notes.ts_type   = 'HRF weighted TS';
+                notes.cond_name = cond_list{1,atlas}{cond};
                 
                 % Calculate connectivity
                 switch(conn_type)
@@ -310,11 +319,12 @@ else
                 end
                 
                 % Save variable
-                save_name = fullfile(output_dir, ['connectivity_', conn_type], ...
-                                     atlas_name{atlas}, ['conn_mat_',          ...
-                                     conn_type, '_', atlas_name{atlas}, '_',   ...
-                                     cond_list{1,atlas}{cond}, '_',            ...
-                                     subj_list{1,atlas}{sub}, '.mat']);
+                save_name = fullfile(output_dir, atlas_name{atlas},     ...
+                                    cond_list{1,atlas}{cond},           ...
+                                    ['conn_mat_', conn_type, '_',       ...
+                                    atlas_name{atlas}, '_',             ...
+                                    cond_list{1,atlas}{cond}, '_',      ...
+                                    subj_list{1,atlas}{cond}{sub}, '.mat']);
                 save(save_name, 'conn_mat', 'p_vals', 'roi_names', 'xyz', 'notes');
             end
         end
