@@ -253,10 +253,11 @@ if merge
                 xyz               = xyz_all;
                 
                 % Save some extra information
-                notes.atlas     = atlas_name;
-                notes.conn_type = conn_type;
-                notes.ts_type   = 'HRF weighted TS';
-                notes.cond_name = cond_list_all{cond};
+                notes.subject_ID = subj_list_all{sub};
+                notes.atlas      = atlas_name;
+                notes.conn_type  = conn_type;
+                notes.ts_type    = 'HRF weighted TS';
+                notes.cond_name  = cond_list_all{cond};
                 
                 % Initialize
                 conn_mat = zeros(length(roi_names));
@@ -302,10 +303,11 @@ else
                 p_vals   = zeros(length(roi_names));
                 
                 % Save some extra information
-                notes.atlas     = atlas_name{atlas};
-                notes.conn_type = conn_type;
-                notes.ts_type   = 'HRF weighted TS';
-                notes.cond_name = cond_list{1,atlas}{cond};
+                notes.subject_ID = subj_list{1,atlas}{cond}{sub};
+                notes.atlas      = atlas_name{atlas};
+                notes.conn_type  = conn_type;
+                notes.ts_type    = 'HRF weighted TS';
+                notes.cond_name  = cond_list{1,atlas}{cond};
                 
                 % Calculate connectivity
                 switch(conn_type)
