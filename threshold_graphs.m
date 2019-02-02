@@ -179,40 +179,16 @@ if ischar(atlas_name)
 end
 num_atlases = size(atlas_name, 1);
 
-%% Get all files for each atlas
-cd(conn_dir);
-file_list  = cell(1,num_atlases);
-parse_list = cell(1,num_atlases);
 
+%% Get all conditions for each atlas
+cond_list = cell(1,num_atlases);
 for atlas = 1:num_atlases
     cd(fullfile(conn_dir, atlas_name{atlas}));
-    tmp_list  = dir('conn_mat_*.mat');
-    tmp_list  = struct2cell(tmp_list);
-    tmp_list(2:end,:)   = [];
-    file_list{:,atlas}  = tmp_list';
-    parse_list{:,atlas} = cellfun(@(x) strsplit(x, '_'),          ...
-                          regexprep(file_list{:,atlas},           ...
-                          {'conn_mat_', [atlas_name{atlas}, '_'], ...
-                          '.mat'}, ''), 'UniformOutput', false);
-end
-
-%% Compile condition list, subject list, and connectivity list
-cond_list     = cell(1,num_atlases);
-subj_list     = cell(1,num_atlases);
-conn_list     = cell(1,num_atlases);
-tmp_cond_list = cell(1,num_atlases);
-tmp_subj_list = cell(1,num_atlases);
-tmp_conn_list = cell(1,num_atlases);
-
-for atlas = 1:num_atlases
-    for files = 1:length(parse_list{1,atlas})
-        tmp_conn_list{files,atlas} = parse_list{1,atlas}{files,1}{1};
-        tmp_cond_list{files,atlas} = parse_list{1,atlas}{files,1}{2};
-        tmp_subj_list{files,atlas} = parse_list{1,atlas}{files,1}{3};
-    end
-    conn_list{:,atlas} = unique(tmp_conn_list(:,atlas));
-    cond_list{:,atlas} = unique(tmp_cond_list(:,atlas));
-    subj_list{:,atlas} = unique(tmp_subj_list(:,atlas));
+    tmp_list = dir;
+    tmp_list = struct2cell(tmp_list);
+    tmp_list(2:end,:) = [];
+    tmp_list(ismember(tmp_list, {'.', '..'})) = [];
+    cond_list{:,atlas} = tmp_list';
 end
 
 % Check if cond_name exist in cond_list
@@ -226,13 +202,43 @@ for atlas = 1:num_atlases
     end
 end
 
-% Check if subj_id exist in subj_list
+%% Get all subject IDs for each atlas for given condition(s)
+cd(conn_dir);
+subj_list  = cell(1,num_atlases);
+conn_list  = cell(1,num_atlases);
+
 for atlas = 1:num_atlases
-    if ~strcmpi(subj_id, 'all')
-        if ~ismember(subj_list{:,atlas}, subj_id)
-            error('Cannot find one or more subjects');
-        else
-            subj_list{:,atlas} = subj_id;
+    for cond = 1:length(cond_list{1,atlas})
+        cd(fullfile(conn_dir, atlas_name{atlas}, cond_list{1,atlas}{cond}));
+        tmp_list = dir(['conn_mat_*_', atlas_name{atlas}, '_', ...
+                        cond_list{1,atlas}{cond}, '_*.mat']);
+        tmp_list  = struct2cell(tmp_list);
+        tmp_list(2:end,:) = [];
+        tmp_list = tmp_list';
+        
+        % Get subject IDs and connectivity type for this condition
+        tmp = cellfun(@(x) strsplit(x, '_'),            ...
+                                             regexprep(tmp_list,               ...
+                                             {'conn_mat_*_',                   ...
+                                             [atlas_name{atlas}, '_'],         ...
+                                             [cond_list{1,atlas}{cond}, '_'],  ...
+                                             '.mat'}, ''), 'UniformOutput', false);
+        for tmp_var = 1:length(tmp)
+            subj_list{1,atlas}{1,cond}{tmp_var,1} = tmp{tmp_var}{2};
+            conn_list{1,atlas}{1,cond}{tmp_var,1} = tmp{tmp_var}{1};
+        end
+        
+        % Check if subj_id exist in subj_list
+        if ~strcmpi(subj_id, 'all')
+            if ~ismember(subj_id, subj_list{1,atlas}{1,cond})
+                error(['Could not find one or more subjects in ', ...
+                       cond_list{1,atlas}{cond}]);
+            else
+                % Remove subjects and connectivity types which are not needed 
+                to_remove = ~ismember(subj_list{1,atlas}{1,cond}, subj_id);
+                subj_list{1,atlas}{1,cond}(to_remove) = [];
+                conn_list{1,atlas}{1,cond}(to_remove) = [];
+            end
         end
     end
 end
@@ -246,15 +252,17 @@ end
 
 %% Create graphs
 for atlas = 1:num_atlases
-    for sub = 1:length(subj_list{1,atlas})
-        for cond = 1:length(cond_list{1,atlas})
-            for con = 1:length(conn_list{1,atlas})
+    for cond = 1:length(cond_list{1,atlas})
+        for sub = 1:length(subj_list{1,atlas}{1,cond})
+%             for con = 1:length(conn_list{1,atlas})
                 % Load variables
-                load(fullfile(conn_dir, list_atlases{atlas},             ...
-                             ['conn_mat_', conn_list{1,atlas}{con}, '_', ...
-                             list_atlases{atlas}, '_',                   ...
-                             cond_list{1,atlas}{cond}, '_',              ...
-                             subj_list{1,atlas}{sub}, '.mat']),          ...
+                load(fullfile(conn_dir, list_atlases{atlas},            ...
+                             cond_list{1,atlas}{cond},                  ...
+                             ['conn_mat_',                              ...
+                             conn_list{1,atlas}{cond}{sub}, '_',        ...
+                             list_atlases{atlas}, '_',                  ...
+                             cond_list{1,atlas}{cond}, '_',             ...
+                             subj_list{1,atlas}{cond}{sub}, '.mat']),   ...
                              'conn_mat', 'xyz', 'roi_names', 'notes');
                 
                 % Convert to graph
@@ -272,12 +280,12 @@ for atlas = 1:num_atlases
                                 mkdir(save_dir);
                             end
                                             
-                            out_name = fullfile(save_dir, ['graphs_',          ...
-                                                subj_list{1,atlas}{sub}, '_',  ...
-                                                conn_list{1,atlas}{con}, '_',  ...
-                                                list_atlases{atlas}, '_',      ...
-                                                template_name,                 ...
-                                                num2str(thresh_weight(thresh), ...
+                            out_name = fullfile(save_dir, ['graphs_',                  ...
+                                                subj_list{1,atlas}{1,cond}{sub}, '_',  ...
+                                                conn_list{1,atlas}{1,cond}{sub}, '_',  ...
+                                                list_atlases{atlas}, '_',              ...
+                                                template_name,                         ...
+                                                num2str(thresh_weight(thresh),         ...
                                                 '%0.2f'), '.mat']);
                             
                             % Threshold
@@ -297,10 +305,6 @@ for atlas = 1:num_atlases
                             adj = weight_conversion(adj, 'autofix');
                             
                             % Make notes
-                            notes.subject_ID    = subj_list{1,atlas}{sub};
-                            notes.atlas_name    = list_atlases{atlas};
-                            notes.cond_name     = cond_list{1,atlas}{cond};
-                            notes.conn_type     = conn_list{1,atlas}{con};
                             notes.binarize      = binarize;
                             notes.neg_discard   = neg_discard;
                             notes.thresh_type   = thresh_type;
@@ -324,12 +328,12 @@ for atlas = 1:num_atlases
                                 mkdir(save_dir);
                             end
                                             
-                            out_name = fullfile(save_dir, ['graphs_',          ...
-                                                subj_list{1,atlas}{sub}, '_',  ...
-                                                conn_list{1,atlas}{con}, '_',  ...
-                                                list_atlases{atlas}, '_',      ...
-                                                template_name,                 ...
-                                                num2str(thresh_weight(thresh), ...
+                            out_name = fullfile(save_dir, ['graphs_',                  ...
+                                                subj_list{1,atlas}{1,cond}{sub}, '_',  ...
+                                                conn_list{1,atlas}{1,cond}{sub}, '_',  ...
+                                                list_atlases{atlas}, '_',              ...
+                                                template_name,                         ...
+                                                num2str(thresh_weight(thresh),         ...
                                                 '%0.2f'), '.mat']);
                             
                             % Threshold
@@ -349,10 +353,6 @@ for atlas = 1:num_atlases
                             adj = weight_conversion(adj, 'autofix');
                             
                             % Make notes
-                            notes.subject_ID    = subj_list{1,atlas}{sub};
-                            notes.atlas_name    = list_atlases{atlas};
-                            notes.cond_name     = cond_list{1,atlas}{cond};
-                            notes.conn_type     = conn_list{1,atlas}{con};
                             notes.binarize      = binarize;
                             notes.neg_discard   = neg_discard;
                             notes.thresh_type   = thresh_type;
@@ -363,7 +363,6 @@ for atlas = 1:num_atlases
                             save(out_name, 'adj', 'roi_names', 'xyz', 'notes');
                         end
                 end
-            end
         end
     end
 end
