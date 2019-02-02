@@ -254,7 +254,7 @@ if merge
                 
                 % Save some extra information
                 notes.atlas     = atlas_name;
-                notes.conn_tpye = conn_type;
+                notes.conn_type = conn_type;
                 notes.ts_type   = 'HRF weighted TS';
                 notes.cond_name = cond_list_all{cond};
                 
@@ -303,7 +303,7 @@ else
                 
                 % Save some extra information
                 notes.atlas     = atlas_name{atlas};
-                notes.conn_tpye = conn_type;
+                notes.conn_type = conn_type;
                 notes.ts_type   = 'HRF weighted TS';
                 notes.cond_name = cond_list{1,atlas}{cond};
                 
