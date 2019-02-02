@@ -145,27 +145,24 @@ end
 
 num_atlases = size(atlas_name, 1);
 
-%% Get all conditions
-cd(graph_dir);
+%% Get all conditions for each atlas
 cond_list = cell(1,num_atlases);
-
 for atlas = 1:num_atlases
     cd(fullfile(graph_dir, atlas_name{atlas}));
     tmp_list = dir;
     tmp_list = struct2cell(tmp_list);
     tmp_list(2:end,:) = [];
-    tmp_list = tmp_list';
-    tmp_list(ismember(tmp_list, {'.','..'})) = [];
-    cond_list{:,atlas} = tmp_list;
+    tmp_list(ismember(tmp_list, {'.', '..'})) = [];
+    cond_list{:,atlas} = tmp_list';
 end
 
-% Check if user has specified cond_name
-if ~strcmpi(cond_name, 'all')
-    for atlas = 1:num_atlases
-        if sum(ismember(cond_list{1,atlas}, cond_name)) ~= length(cond_name)
+% Check if cond_name exist in cond_list
+for atlas = 1:num_atlases
+    if ~strcmpi(cond_name, 'all')
+        if sum(ismember(cond_list{:,atlas}, cond_name)) ~= length(cond_name)
             error('Cannot find one or more conditions');
         else
-            cond_list{1,atlas}(~ismember(cond_list{1,atlas}, cond_name)) = [];
+            cond_list{:,atlas} = cond_name;
         end
     end
 end
@@ -224,10 +221,12 @@ for atlas = 1:num_atlases
                     graph_stats = graph_stats_wei(adj, norm_wei);
                     notes.normalize_for_stats = norm_wei;
                 end
-
+                
                 % Save directory
-                save_dir  = fullfile(out_dir, ['graph_stats_', subj_conn, '_', ...
-                                     thresh_type, '_', graph_type, '_',       ...
+                save_dir  = fullfile(out_dir, atlas_name{atlas},        ...
+                                     cond_list{1,atlas}{cond},          ...
+                                     ['graph_stats_', subj_conn, '_',   ...
+                                     thresh_type, '_', graph_type, '_', ...
                                      num2str(subj_weight, '%0.2f')]);
                 if ~exist(save_dir, 'dir')
                     mkdir(save_dir);
