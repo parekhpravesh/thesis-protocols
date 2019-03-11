@@ -10,6 +10,7 @@ function [TR, num_vols, hpf] = get_fmri_task_details(task_name)
 %             	* pm           prospective memory task
 %             	* hamths       hallucination attention modulation task (HS)
 %               * hamtsz       hallucination attention modulation task (SZ)
+%               * rest         resting state
 %
 %% Output:
 % TR:         Repetition time
@@ -28,7 +29,7 @@ if ~exist('task_name', 'var')
 else
     % Check validity of task_name
     task_name = lower(task_name);
-    if ~ismember(task_name, {'vftclassic', 'vftmodern', 'pm', 'hamths', 'hamtsz'})
+    if ~ismember(task_name, {'vftclassic', 'vftmodern', 'pm', 'hamths', 'hamtsz', 'rest'})
         error('Incorrect task_name provided');
     end
 end
@@ -59,4 +60,9 @@ switch(task_name)
         TR       = 3;
         num_vols = 209;
         hpf      = 252;
+        
+    case 'rest'
+        TR       = 3;
+        num_vols = 140;
+        hpf      = NaN;
 end
