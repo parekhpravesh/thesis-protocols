@@ -1,12 +1,15 @@
-function create_conn_batch_mat(data_dir,        task_name,      list_subjs,   ...
-                               anat_prefix,     func_prefix,    atlas_file,   ...
-                               outlier_loc,     outlier_prefix, num_par_jobs, ... 
-                               project_name,    output_name,    full_bids)
+function create_conn_batch_mat(data_dir,     task_name,    task_dir,        ...
+                               list_subjs,   anat_prefix,  func_prefix,     ...
+                               atlas_file,   outlier_loc,  outlier_prefix,  ...
+                               num_par_jobs, project_name, output_name,     ...
+                               full_bids)
 % Function to read in pre-processed data and create a mat file which can be
 % read by conn_batch
 %% Inputs:
 % data_dir:         fullpath to directory containing sub-* folders
 % task_name:        name of the task
+% task_dir:         yes/no indicating if task-<task_name> directory is
+%                   present in subject folder ('func' folder if full bids)
 % list_subjs:       cell type having list of subjects to process
 % anat_prefix:      prefix for normalized skull stripped data
 % func_prefix:      prefix for smoothed normalized functional data
@@ -87,6 +90,7 @@ function create_conn_batch_mat(data_dir,        task_name,      list_subjs,   ..
 %% Defaults:
 % task_name:        'rest'
 % list_subjs:       'all'
+% task_dir:         'yes'
 % anat_prefix:      'wc0'
 % func_prefix:      'swau'
 % atlas_file:       'atlas.nii' (from Conn)
@@ -120,6 +124,21 @@ else
     if ~ismember(task_name, {'vftclassic', 'vftmodern', 'pm', 'hamths', ...
                              'hamtsz', 'rest'})
         error(['Unknown task_name provided: ', task_name]);
+    end
+end
+
+% Check task_dir
+if ~exist('task_dir', 'var') || isempty(task_dir)
+    task_dir = 1;
+else
+    if strcmpi(task_dir, 'yes')
+        task_dir = 1;
+    else
+        if strcmpi(task_dir, 'no')
+            task_dir = 0;
+        else
+            error(['Unknown value for task_dir: ', task_dir']);
+        end
     end
 end
 
@@ -291,6 +310,11 @@ for sub = 1:num_subjs
     else
         func_path = fullfile(data_dir, subj_name);
         anat_path = fullfile(data_dir, subj_name);
+    end
+    
+    % Add task path if needed
+    if task_dir
+        func_path = fullfile(func_path, ['task-', task_name]);
     end
         
     %% Scans
