@@ -1,10 +1,17 @@
 function [echo_spacing, readout_time, encode_dir, slice_info, num_slices,   ...
           slice_order,  mb_factor, temporal_spacing, min_TR, slice_times] = ...
-          extract_EPI_details(ExamCard)
+          extract_EPI_details(ExamCard, echo_spacing_method, readout_method)
 % Function to return echo spacing, EPI readout time, and phase encoding 
 % direction  given a Philips EPI ExamCard text file
 %% Input:
 % ExamCard:             text file having Philips EPI sequence ExamCard
+% echo_spacing_method:  should be one of:
+%                           * 'brainvoyager' or 'BV'
+%                           * 'OSF'
+% readout_method:       should be one of:
+%                           * 'topup' or 'fsl'
+%                           * 'fsl_alt' or 'fsl_forum'
+%                           * 'BIDS'
 % 
 %% Outputs:
 % echo_spacing:         echo spacing value in milliseconds
@@ -40,6 +47,43 @@ function [echo_spacing, readout_time, encode_dir, slice_info, num_slices,   ...
 % slice_times are computed as:
 % 0:(min_TR/num_slices):(min_TR-(min_TR/num_slices))
 % 
+% Two methods for echo spacing calculation exist:
+% a) 'brainvoyager' or 'BV' method
+%    -----------------------------
+%       echo spacing in msec = 1000 * (WFS/(water-fat shift (in Hz) * ETL))
+%       where
+%           ETL = EPI factor + 1
+%           water-fat-shift (Hz) = fieldstrength (T) * water-fat difference (ppm) * resonance frequency (MHz/T)
+%           water-fat difference (ppm) = 3.35 [2]
+%           resonance frequency (MHz/T) = 42.576
+%           effective echo spacing = echo spacing/acceleration
+%       => effective echo spacing = (1000*(WFS/427.888*ETL))/acceleration
+% 
+% b) 'OSF' method
+%    ------------
+%       effective echo spacing = (((1000 * WFS)/(434.215 * (ETL+1))/acceleration)
+% 
+% Three methods exist for EPI readout calculation:
+% a) 'topup'
+%    -------
+%       total readout time = echo spacing * (EPI factor - 1)
+% 
+% b) 'fsl_alt' or 'fsl_forum'
+%    ------------------------
+%       total readout time = echo spacing * EPI factor
+% 
+% c) 'BIDS'
+%    ------
+%       total readout time = effective echo spacing * (ReconMatrixPE - 1)
+% 
+% dcm2niix reports EPI factor as the ETL; this definition is used
+% 
+% ReconMatrixPE is derived from 'Reconstruction matrix' field from ExamCard
+% 
+%% Defaults:
+% echo_spacing_method:  'brainvoyager'
+% readout_method:       'topup'
+% 
 %% References:
 % https://support.brainvoyager.com/brainvoyager/functional-analysis-preparation/29-pre-processing/78-epi-distortion-correction-echo-spacing-and-bandwidth
 % https://www.jiscmail.ac.uk/cgi-bin/webadmin?A2=fsl;162ab1a3.1308
@@ -49,11 +93,44 @@ function [echo_spacing, readout_time, encode_dir, slice_info, num_slices,   ...
 % http://web.mit.edu/fsl_v5.0.10/fsl/doc/wiki/topup(2f)Faq.html
 % https://osf.io/hks7x/
 % https://in.mathworks.com/matlabcentral/answers/2015-find-index-of-cells-containing-my-string
-% 
+% https://neurostars.org/t/consolidating-epi-echo-spacing-and-readout-time-for-philips-scanner/4406
+% https://web.archive.org/web/20130420035502/www.spinozacentre.nl/wiki/index.php/NeuroWiki:Current_developments
+% https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html
+
 %% Author
 % Parekh, Pravesh
 % April 16, 2019
 % MBIAL
+
+%% Check inputs
+% Check ExamCard
+if ~exist('ExamCard', 'var') || isempty(ExamCard)
+    error('ExamCard should be provided');
+else
+    if ~exist(ExamCard, 'file')
+        error(['Unable to read: ', ExamCard]);
+    end
+end
+
+% Check echo_spacing_method
+if ~exist('echo_spacing_method', 'var') || isempty(echo_spacing_method)
+    echo_spacing_method = 'brainvoyager';
+else
+    echo_spacing_method = lower(echo_spacing_method);
+    if ~ismember(echo_spacing_method, {'brainvoyager', 'bv', 'osf'})
+        error(['Unknown echo spacing method: ', echo_spacing_method]);
+    end
+end
+
+% Check readout_method
+if ~exist('readout_method', 'var') || isempty(readout_method)
+    readout_method = 'topup';
+else
+    readout_method = lower(readout_method);
+    if ~ismember(readout_method, {'topup', 'fsl', 'fsl_alt', 'fsl_forum', 'bids'})
+        error(['Unknown readout_method: ', readout_method]);
+    end
+end
 
 %% Read ExamCard file
 fid  = fopen(ExamCard, 'r');
@@ -154,13 +231,34 @@ else
     acceleration    = 1;
 end
 
+%% Reconstruction matrix
+recon_loc          = strfind(data{1,1}, 'Reconstruction matrix');
+recon_loc          = ~(cellfun('isempty', recon_loc));
+reconstruction_mat = str2double(strrep(data{1,2}{recon_loc}, ';', ''));
+
 %% Other variables
 wfs_hz          = 3 * 3.35 * 42.576;
-echo_train_len  = epi_factor + 1;
+echo_train_len  = epi_factor;
 
 %% Echo spacing
-% echo_spacing  = 1000 * (wfs_value/(wfs_hz * echo_train_len));
-echo_spacing    = ((1000 * wfs_value)/(wfs_hz * echo_train_len)/acceleration);
+if strcmpi(echo_spacing_method, 'brainvoyager') || strcmpi(echo_spacing_method, 'bv')
+    % Brainvoyager method
+    echo_spacing    = ((1000 * wfs_value)/(wfs_hz * echo_train_len)/acceleration);
+else
+    % OSF method
+    echo_spacing    = (1000*(wfs_value/(434.215*(echo_train_len+1)))/acceleration);
+end
 
 %% Readout time
-readout_time    = (echo_spacing * (epi_factor - 1))/1000;
+% Topup method
+if strcmpi(readout_method, 'topup') || strcmpi(readout_method, 'fsl')
+    readout_time    = (echo_spacing * (epi_factor - 1))/1000;
+else
+    % FSL forum post method
+    if strcmpi(readout_method, 'fsl_alt') || strcmpi(readout_method, 'fsl_forum')
+        readout_time = (echo_spacing * epi_factor)/1000;
+    else
+        % BIDS method
+        readout_time = (echo_spacing * (reconstruction_mat - 1))/1000;
+    end
+end
