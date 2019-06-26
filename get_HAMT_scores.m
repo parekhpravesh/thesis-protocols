@@ -1,6 +1,6 @@
 function [HAMT_scores, scores_desc] = get_HAMT_scores(filename)
 % Function to read an exported (in Excel format) edat text file and compute
-% performance scores and latencies for PM task
+% performance scores and latencies for HAMT task
 %% Input:
 % filename:         cell containing rows of name(s)/full paths of text 
 %                   file(s) which were previously exported in Excel format 
