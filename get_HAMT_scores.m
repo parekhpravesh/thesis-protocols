@@ -1,6 +1,6 @@
-function [HAMT_scores, scores_desc] = get_HAMT_scores(filename)
+function HAMT_scores = get_HAMT_scores(filename)
 % Function to read an exported (in Excel format) edat text file and compute
-% performance scores and latencies for HAMT task
+% performance score and AVH status for HAMT task
 %% Input:
 % filename:         cell containing rows of name(s)/full paths of text 
 %                   file(s) which were previously exported in Excel format 
@@ -110,7 +110,7 @@ for files = 1:num_files
             % Recording number of times the pattern changed for SZ
             % For SZ, for second block, correct response can be 8 or 9 as
             % the number of changes is 6 and options are 2, 5, and 7
-            % act_changes = [7 6 3 4 7];
+            % act_changes  = [7 6 3 4 7];
             corr_responses = [8 9 9 9 8];
         end
     end
@@ -164,5 +164,4 @@ HAMT_scores = cell2table(HAMT_scores, 'VariableNames', scores_desc);
 writetable(HAMT_scores, ['behavioural_data_HAMT_', datestr(now, 'ddmmmyyyy'), '.csv']);
 
 %% Save all variables
-save(['behavioural_data_HAMT_', datestr(now, 'ddmmmyyyy'), '.mat'],       ...
-     'filename', 'HAMT_scores', 'scores_desc');
+save(['behavioural_data_HAMT_', datestr(now, 'ddmmmyyyy'), '.mat'], 'HAMT_scores');
