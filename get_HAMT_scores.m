@@ -98,7 +98,7 @@ for files = 1:num_files
     loc_resp_HA = data.SubTrial==1 & loc_HA;
 
     % Get all correct responses for VA
-    corr_responses = data.asQ_CRESP(loc_resp_VA);
+    corr_responses = data.asQ_CRESP(loc_resp_VA)';
 
     % Correct VA responses, if required
     if ~HA && correct_HAMT
