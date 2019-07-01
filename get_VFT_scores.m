@@ -19,6 +19,7 @@ function VFT_AVH_scores = get_VFT_scores(filename)
 % 
 % VFT_AVH_scores consist of the following entries:
 % filename:         name(s) of file(s) which were input
+% language:         the language in which task was administered
 % WR_AVH_noHall:    the number of times the subject responded as "no voices
 %                   were heard" during word repetition (WR) condition
 % WR_AVH_Hall_lt50: the number of times the subject responded as "voices
@@ -65,9 +66,10 @@ else
 end
 
 %% Initialize
-scores_desc = {'filename';         'WR_AVH_noHall'; 'WR_AVH_Hall_lt50'; ...
-               'WR_AVH_Hall_gt50'; 'WG_AVH_noHall'; 'WG_AVH_Hall_lt50'; ...
-               'WG_AVH_Hall_gt50'; 'WR_AVH_status'; 'WG_AVH_status'};
+scores_desc = {'filename';         'language';         'WR_AVH_noHall';    ...
+               'WR_AVH_Hall_lt50'; 'WR_AVH_Hall_gt50'; 'WG_AVH_noHall';    ...
+               'WG_AVH_Hall_lt50'; 'WG_AVH_Hall_gt50'; 'WR_AVH_status';    ...
+               'WG_AVH_status'};
            
 VFT_AVH_scores = cell(num_files, length(scores_desc));
 
@@ -77,17 +79,21 @@ for files = 1:num_files
     % Read file as a table
     data = readtable(filename{files});
     
+    % Get language
+    language = data.Language(1);
+    
     % Decide if HS or SZ
     if strcmpi(data.SubjectGroup, 'Healthy')
-        VFT_AVH_scores{files,1} = filename{files};
-        VFT_AVH_scores{files,2} = NaN;
-        VFT_AVH_scores{files,3} = NaN;
-        VFT_AVH_scores{files,4} = NaN;
-        VFT_AVH_scores{files,5} = NaN;
-        VFT_AVH_scores{files,6} = NaN;
-        VFT_AVH_scores{files,7} = NaN;
-        VFT_AVH_scores{files,8} = NaN;
-        VFT_AVH_scores{files,9} = NaN;
+        VFT_AVH_scores{files,1}  = filename{files};
+        VFT_AVH_scores{files,2}  = language;
+        VFT_AVH_scores{files,3}  = NaN;
+        VFT_AVH_scores{files,4}  = NaN;
+        VFT_AVH_scores{files,5}  = NaN;
+        VFT_AVH_scores{files,6}  = NaN;
+        VFT_AVH_scores{files,7}  = NaN;
+        VFT_AVH_scores{files,8}  = NaN;
+        VFT_AVH_scores{files,9}  = NaN;
+        VFT_AVH_scores{files,10} = NaN;
     else
         
         % Get all WR and WG conditions
@@ -105,36 +111,39 @@ for files = 1:num_files
         % Save filename
         VFT_AVH_scores{files,1} = filename{files};
         
+        % Save language
+        VFT_AVH_scores{files,2} = language;
+        
         % WR_AVH_noHall
-        VFT_AVH_scores{files,2} = sum(all_WR_responses==9);
+        VFT_AVH_scores{files,3} = sum(all_WR_responses==9);
         
         % WR_AVH_Hall_lt50
-        VFT_AVH_scores{files,3} = sum(all_WR_responses==8);
+        VFT_AVH_scores{files,4} = sum(all_WR_responses==8);
         
         % WR_AVH_Hall_gt50
-        VFT_AVH_scores{files,4} = sum(all_WR_responses==7);
+        VFT_AVH_scores{files,5} = sum(all_WR_responses==7);
         
         % WG_AVH_noHall
-        VFT_AVH_scores{files,5} = sum(all_WG_responses==9);
+        VFT_AVH_scores{files,6} = sum(all_WG_responses==9);
         
         % WG_AVH_Hall_lt50
-        VFT_AVH_scores{files,6} = sum(all_WG_responses==8);
+        VFT_AVH_scores{files,7} = sum(all_WG_responses==8);
         
         % WG_AVH_Hall_gt50
-        VFT_AVH_scores{files,7} = sum(all_WG_responses==7);
+        VFT_AVH_scores{files,8} = sum(all_WG_responses==7);
         
         % WR_AVH_status
         if sum(all_WR_responses==7) >= 4
-            VFT_AVH_scores{files,8} = 'AVH+';
+            VFT_AVH_scores{files,9} = 'AVH+';
         else
-            VFT_AVH_scores{files,8} = 'AVH-';
+            VFT_AVH_scores{files,9} = 'AVH-';
         end
         
         % WG_AVH_status
         if sum(all_WG_responses==7) >= 4
-            VFT_AVH_scores{files,9} = 'AVH+';
+            VFT_AVH_scores{files,10} = 'AVH+';
         else
-            VFT_AVH_scores{files,9} = 'AVH-';
+            VFT_AVH_scores{files,10} = 'AVH-';
         end
     end
 end
