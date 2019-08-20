@@ -31,20 +31,40 @@ if ~exist('in_file', 'var') || isempty(in_file)
 else
     if ~exist(in_file, 'file')
         error(['Unable to read: ', in_file]);
-    else
-        out_loc = fileparts(in_file);
-        out_loc = [out_loc, '.nii'];
-        if isempty(out_loc)
-            out_loc = pwd;
-        end
     end
 end
+%         out_loc = fileparts(in_file);
+%         if isempty(out_loc)
+%             out_loc = pwd;
+%         end
+%     end
+% end
 
 % Check out_name
 if ~exist('out_name', 'var') || isempty(out_name)
     out_name = strrep(in_file, '.nii', '_filled.nii');
     out_loc  = '';
-end
+else
+    % Parse out_name
+    [tmp_path, tmp_name, tmp_ext] = fileparts(out_name);
+    if isempty(tmp_path)
+        out_loc = '';
+    else
+        out_loc  = tmp_path;
+    end
+        
+    if ~isempty(tmp_path) 
+        if isempty(tmp_ext)
+            out_name = [tmp_name, '.nii'];
+        else
+            out_name = [tmp_name, tmp_ext];
+        end
+    else
+        if isempty(tmp_ext)
+            out_name = [tmp_name, '.nii'];
+        end
+    end  
+end        
 
 % Check conn_val
 if ~exist('conn_val', 'var') || isempty(conn_val)
@@ -54,6 +74,9 @@ end
 %% Read input file
 hdr  = spm_vol(in_file);
 data = spm_read_vols(hdr);
+
+%% Strictly binarize the image
+data = round(data,0);
 
 %% invert mask
 data = (data.*-1)+1;
