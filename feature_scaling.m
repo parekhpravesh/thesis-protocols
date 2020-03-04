@@ -147,8 +147,11 @@ switch(method)
         end
         
         % Apply scaling
-        scaled_feature_matrix = (feature_matrix - scaling_parameters.min_val)./ ...
-                                (scaling_parameters.max_val - scaling_parameters.min_val);
+        % scaled_feature_matrix = (feature_matrix - scaling_parameters.min_val)./ ...
+        %                         (scaling_parameters.max_val - scaling_parameters.min_val);
+        scaled_feature_matrix = bsxfun(@rdivide, bsxfun(@minus, feature_matrix,             scaling_parameters.min_val), ...
+                                                 bsxfun(@minus, scaling_parameters.max_val, scaling_parameters.min_val));
+
     case 'mean'
         if to_scale
             % Get minimum, maximum, and mean values
@@ -158,8 +161,11 @@ switch(method)
         end
         
         % Apply scaling
-        scaled_feature_matrix = (feature_matrix - scaling_parameters.mean_val)./ ...
-                                (scaling_parameters.max_val - scaling_parameters.min_val);
+        % scaled_feature_matrix = (feature_matrix - scaling_parameters.mean_val)./ ...
+        %                         (scaling_parameters.max_val - scaling_parameters.min_val);
+        scaled_feature_matrix = bsxfun(@rdivide, bsxfun(@minus, feature_matrix,             scaling_parameters.mean_val), ...
+                                                 bsxfun(@minus, scaling_parameters.max_val, scaling_parameters.min_val));
+
     case 'std'
         if to_scale
             % Get mean and standard deviation
@@ -168,6 +174,8 @@ switch(method)
         end
         
         % Apply scaling
-        scaled_feature_matrix = (feature_matrix - scaling_parameters.mean_val)./ ...
-                                scaling_parameters.std_val;
+        % scaled_feature_matrix = (feature_matrix - scaling_parameters.mean_val)./ ...
+        %                         scaling_parameters.std_val;
+        scaled_feature_matrix = bsxfun(@rdivide, bsxfun(@minus, feature_matrix, scaling_parameters.mean_val), ...
+                                                 scaling_parameters.std_val);
 end
