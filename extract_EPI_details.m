@@ -378,7 +378,8 @@ min_TR              = str2double(regexprep(temp{1}, {' ', '"'}, ''));
 
 %% Compute slice times
 slice_times         = (0:(min_TR/num_slices):(min_TR-(min_TR/num_slices)))./1000;
-slice_times         = slice_times(slice_order);
+[~, ord]            = sort(slice_order, 'ascend'); 
+slice_times         = slice_times(ord);
 
 %% Get MB-factor
 mb_fac_loc          = strfind(data{1,1}, 'MB SENSE');
