@@ -81,8 +81,6 @@ function create_conn_batch_mat(data_dir,     task_name,    task_dir,        ...
 % 
 % Performs all the steps till first level ROI-to-ROI connectivity
 % 
-% For either VFT, automatically specifies sparse acquisition
-% 
 % Assumes only one session per subject
 % 
 % Written for CONN functional connectivity toolbox 18b
@@ -230,11 +228,11 @@ TR = tmp_design.RT;
 clear tmp_design
 
 %% Determine acquisition type
-if ismember(task_name, {'vftclassic', 'vftmodern'})
-    acquisition_type = 0;
-else
+% if ismember(task_name, {'vftclassic', 'vftmodern'})
+%     acquisition_type = 0;
+% else
     acquisition_type = 1;
-end
+% end
 
 %% Determine if fixed outlier_prefix
 [~,~,outlier_chk] = fileparts(outlier_prefix);
