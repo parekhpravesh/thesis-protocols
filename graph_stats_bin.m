@@ -36,15 +36,15 @@ graph_stats.matching_idx = matching_ind_und(adj);
                               graph_stats.density.num_edges] = density_und(adj);
                           
 %% Rentian scaling (3D)
-[graph_stats.rentian3.nodes, graph_stats.rentian3.edges] = ...
-                             rentian_scaling_3d(adj, xyz, 5000, 1e-6);
-[graph_stats.rentian3.beta,  graph_stats.rentian3.stats] = ...
-                             robustfit(log10(graph_stats.rentian3.nodes), ...
-                                       log10(graph_stats.rentian3.edges));
-graph_stats.rentian3.rentexponent    = graph_stats.rentian3.beta(2,1);
-graph_stats.rentian3.rentexponent_SE = graph_stats.rentian3.stats.se(2,1);
-graph_stats.rentian3.settings.n      = 5000;
-graph_stats.rentian3.settings.tol    = 1e-6;
+% [graph_stats.rentian3.nodes, graph_stats.rentian3.edges] = ...
+%                              rentian_scaling_3d(adj, xyz, 5000, 1e-6);
+% [graph_stats.rentian3.beta,  graph_stats.rentian3.stats] = ...
+%                              robustfit(log10(graph_stats.rentian3.nodes), ...
+%                                        log10(graph_stats.rentian3.edges));
+% graph_stats.rentian3.rentexponent    = graph_stats.rentian3.beta(2,1);
+% graph_stats.rentian3.rentexponent_SE = graph_stats.rentian3.stats.se(2,1);
+% graph_stats.rentian3.settings.n      = 5000;
+% graph_stats.rentian3.settings.tol    = 1e-6;
 
 %% Clustering coefficient
 graph_stats.clustering_coeff = clustering_coef_bu(adj);
