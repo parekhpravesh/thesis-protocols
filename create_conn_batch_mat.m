@@ -221,6 +221,53 @@ if strcmpi(list_subjs, 'all')
 end
 num_subjs  = length(list_subjs);
 
+%% Check if any files for any subjects are missing
+missing_loc = false(num_subjs,1);
+for subjs = 1:num_subjs
+    if full_bids
+        func_path = fullfile(data_dir, list_subjs{subjs}, 'func');
+        anat_path = fullfile(data_dir, list_subjs{subjs}, 'anat');
+    else
+        func_path = fullfile(data_dir, list_subjs{subjs});
+        anat_path = fullfile(data_dir, list_subjs{subjs});
+    end
+    
+    % Add task path if needed
+    if task_dir
+        func_path = fullfile(func_path, ['task-', task_name]);
+    end
+    
+    % Find anatomical file
+    if exist(anat_path, 'dir')
+        cd(anat_path);
+        anat_file = dir([anat_prefix, '*.nii']);
+        if isempty(anat_file) || length(anat_file)>1
+            warning(['Missing and/or multiple anatomical files found for: ', list_subjs{subjs}]);
+            missing_loc(subjs) = true;
+        end
+    else
+        warning(['Missing anaatomical directory for: ', list_subjs{subjs}]);
+        missing_loc(subjs) = true;
+    end
+    
+    % Find functional file
+    if exist(func_path, 'dir')
+        cd(func_path);
+        func_file = dir([func_prefix, '*.nii']);
+        if isempty(func_file) || length(func_file)>1
+            warning(['Missing and/or multiple functional files found for: ', list_subjs{subjs}]);
+            missing_loc(subjs) = true;
+        end
+    else
+        warning(['Missing functional directory for: ', list_subjs{subjs}]);
+        missing_loc(subjs) = true;
+    end 
+end
+
+% Update subject list
+list_subjs(missing_loc) = [];
+num_subjs = length(list_subjs);
+
 %% Get task design and TR
 [conditions, TR] = get_fmri_task_design_conn(task_name, num_subjs);
 
