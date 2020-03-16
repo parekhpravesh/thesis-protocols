@@ -222,10 +222,7 @@ end
 num_subjs  = length(list_subjs);
 
 %% Get task design and TR
-conditions = get_fmri_task_design_conn(task_name, num_subjs);
-tmp_design = get_fmri_task_design_spm(task_name, 'seconds');
-TR = tmp_design.RT;
-clear tmp_design
+[conditions, TR] = get_fmri_task_design_conn(task_name, num_subjs);
 
 %% Determine acquisition type
 % if ismember(task_name, {'vftclassic', 'vftmodern'})
