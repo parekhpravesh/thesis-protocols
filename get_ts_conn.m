@@ -23,8 +23,8 @@ function get_ts_conn(project_name, atlas_name, output_dir)
 % for batch mode analysis of already pre-processed data)
 %
 % Assumes that functional files are present in subject specific folders.
-% Subject IDs are picked from full paths to functional files; the folder 
-% in which the functional file is placed is assumed to be the subject ID. 
+% 
+% Subject IDs are based on the first occurrence of 'sub-' keyword 
 % 
 % Multiple atlas_name can be passed at once as a cell type with rows
 % corresponding to atlas names
@@ -74,7 +74,10 @@ num_subjs = CONN_x.Setup.nsubjects;
 % Get subject IDs by parsing functional file names
 list_subjs = cell(num_subjs,1);
 for sub = 1:num_subjs
-    [~, list_subjs{sub}] = fileparts(fileparts(CONN_x.Setup.functional{sub}{1}{1}));
+    loc             = strfind(CONN_x.Setup.functional{sub}{1}{1}, 'sub-');
+    tmp             = strsplit(CONN_x.Setup.functional{sub}{1}{1}(loc(1):end), '/');
+    list_subjs{sub} = tmp{1};
+    % [~, list_subjs{sub}] = fileparts(fileparts(CONN_x.Setup.functional{sub}{1}{1}));
 end
 
 %% Load one file for initializing etc
