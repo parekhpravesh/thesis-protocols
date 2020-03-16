@@ -1,4 +1,4 @@
-function conditions = get_fmri_task_design_conn(task_name, num_subjs)
+function [conditions, TR] = get_fmri_task_design_conn(task_name, num_subjs)
 % Function that returns fMRI experiment task design for Conn
 %% Inputs:
 % task_name:  can be any of the following (case insensitive):
@@ -11,12 +11,14 @@ function conditions = get_fmri_task_design_conn(task_name, num_subjs)
 % 
 % num_subjs:  number of subjects for which design has to be returned
 % 
-%% Output:
+%% Outputs:
 % conditions: structure containing the requested task design
 %             	structure fields:
 %               	* names:      names of the condition
 %                   * onsets:     onset of the condition in seconds
 %                   * durations:  duration of the condition in seconds
+% 
+% TR:         repetition time
 % 
 %% Author(s):
 % Parekh, Pravesh
@@ -46,6 +48,9 @@ switch(task_name)
     % Task: Verbal Fluency Task (Classic)
     case 'vftclassic'
         
+        % Assign TR
+        TR = 4;
+        
         % Initialize conditions
         conditions.names        = {'Instruction', 'WR', 'WG'};
         conditions.onsets       = cell(3,num_subjs,1);
@@ -67,6 +72,9 @@ switch(task_name)
         
     % Task: Verbal Fluency Task (Modern)    
     case 'vftmodern'
+        
+        % Assign TR
+        TR = 4;
         
         % Initialize conditions
         conditions.names        = {'Instruction', 'WR', 'WG', 'Query'};
@@ -91,6 +99,9 @@ switch(task_name)
         
     % Task: Prospective Memory    
     case 'pm'
+        
+        % Assign TR
+        TR = 3;
         
         % Initialize conditions
         conditions.names        = {'Instruction', 'BL', 'OT', 'WM', 'PM', 'Query'};
@@ -120,6 +131,9 @@ switch(task_name)
     % Task: Hallucination Attention Modulation Task (Healthy Subjects)
     case 'hamths'
         
+        % Assign TR
+        TR = 3;
+        
         % Initialize conditions
         conditions.names        = {'Instruction', 'FA', 'VA', 'Query'};
         conditions.onsets       = cell(4,num_subjs,1);
@@ -143,6 +157,9 @@ switch(task_name)
         
     % Task: Hallucination Attention Modulation Task (Schizophrenia)
     case 'hamtsz'
+        
+        % Assign TR
+        TR = 3;
         
         % Initialize conditions
         conditions.names        = {'Instruction', 'FA', 'VA', 'HA', 'Query'};
@@ -169,6 +186,9 @@ switch(task_name)
         
     % Task: Resting State
     case 'rest'
+        
+        % Assign TR
+        TR = 3;
         
         % Initialize conditions
         conditions.names        = {'rest'};
