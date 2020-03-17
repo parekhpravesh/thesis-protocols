@@ -132,6 +132,12 @@ for thresh = 1:num_thresh
                      'Radius', 'Diameter', 'AvgBetweenCentr', 'AvgModZScore',           ...
                      'AvgPartCoeff', 'AvgEigenCent', 'AvgSubgraphCent',                 ...
                      'AvgCoreness', 'AvgVulnerability'};
+                 
+    % Making header into valid names
+    local_header = matlab.lang.makeValidName(local_header);
+    
+    % Make sure column names are unique
+    local_header = matlab.lang.makeUniqueStrings(local_header);    
 
     % Initialize
     all_degrees  = cell(num_subjs, num_rois+2);
