@@ -142,40 +142,42 @@ switch(method)
     case 'rescale'
         if to_scale
             % Get minimum and maximum values
-            scaling_parameters.min_val = min(feature_matrix);
-            scaling_parameters.max_val = max(feature_matrix);
+            scaling_parameters.min_val = min(feature_matrix, [], 'omitnan');
+            scaling_parameters.max_val = max(feature_matrix, [], 'omitnan');
         end
         
         % Apply scaling
-        % scaled_feature_matrix = (feature_matrix - scaling_parameters.min_val)./ ...
-        %                         (scaling_parameters.max_val - scaling_parameters.min_val);
         scaled_feature_matrix = bsxfun(@rdivide, bsxfun(@minus, feature_matrix,             scaling_parameters.min_val), ...
                                                  bsxfun(@minus, scaling_parameters.max_val, scaling_parameters.min_val));
 
     case 'mean'
         if to_scale
             % Get minimum, maximum, and mean values
-            scaling_parameters.min_val  = min(feature_matrix);
-            scaling_parameters.max_val  = max(feature_matrix);
-            scaling_parameters.mean_val = mean(feature_matrix);
+            scaling_parameters.min_val  = min(feature_matrix,  [], 'omitnan');
+            scaling_parameters.max_val  = max(feature_matrix,  [], 'omitnan');
+            scaling_parameters.mean_val = mean(feature_matrix,     'omitnan');
         end
         
         % Apply scaling
-        % scaled_feature_matrix = (feature_matrix - scaling_parameters.mean_val)./ ...
-        %                         (scaling_parameters.max_val - scaling_parameters.min_val);
         scaled_feature_matrix = bsxfun(@rdivide, bsxfun(@minus, feature_matrix,             scaling_parameters.mean_val), ...
                                                  bsxfun(@minus, scaling_parameters.max_val, scaling_parameters.min_val));
 
     case 'std'
         if to_scale
             % Get mean and standard deviation
-            scaling_parameters.mean_val = mean(feature_matrix);
-            scaling_parameters.std_val  = std(feature_matrix);
+            scaling_parameters.mean_val = mean(feature_matrix,    'omitnan');
+            scaling_parameters.std_val  = std(feature_matrix, [], 'omitnan');
         end
         
         % Apply scaling
-        % scaled_feature_matrix = (feature_matrix - scaling_parameters.mean_val)./ ...
-        %                         scaling_parameters.std_val;
         scaled_feature_matrix = bsxfun(@rdivide, bsxfun(@minus, feature_matrix, scaling_parameters.mean_val), ...
                                                  scaling_parameters.std_val);
 end
+
+% Deprecated code
+% scaled_feature_matrix = (feature_matrix - scaling_parameters.min_val)./ ...
+%                         (scaling_parameters.max_val - scaling_parameters.min_val);
+% scaled_feature_matrix = (feature_matrix - scaling_parameters.mean_val)./ ...
+%                         (scaling_parameters.max_val - scaling_parameters.min_val);
+% scaled_feature_matrix = (feature_matrix - scaling_parameters.mean_val)./ ...
+%                         scaling_parameters.std_val;
