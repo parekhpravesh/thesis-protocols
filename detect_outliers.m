@@ -1,4 +1,4 @@
-function location = detect_outliers(matrix, method, threshold)
+function [location, location_U, location_L, cutoff_U, cutoff_L] = detect_outliers(matrix, method, threshold)
 % Function to detect outliers within columns of a matrix, given a method
 %% Inputs:
 % matrix:       matrix to detect outliers in (for each column)
@@ -9,17 +9,16 @@ function location = detect_outliers(matrix, method, threshold)
 %                   * 'percentile'
 % threshold:    number controlling which values get identified as outlier
 %               (see Notes)
-
-% threshold:    for cases where method is 'percentile', threshold 
-%               denotes the lower and upper percentile values above which a 
-%               value is declared as an outlier; for cases where method is
-%               'SD', threshold denotes the number of standard deviations
-%               away from the mean that a value should be before being
-%               called an outlier (see Notes)
 % 
-%% Output:
-% A logical vector indicating for each column the locations which have been
-% detected as an outlier
+%% Outputs:
+% location:     a logical vector indicating, for each column, the locations 
+%               which have been detected as outliers
+% location_U:   a logical vector indicating, for each column, the locations
+%               which exceed the upper cutoff value
+% location_L:   a logical vector indicating, for each column, the locations
+%               which are lower than the lower cutoff value
+% cutoff_U:     a vector containing upper threshold value for each column
+% cutoff_L:     a vector containing lower threshold value for each column
 % 
 %% Notes:
 % Method:       SD
@@ -120,33 +119,35 @@ else
     end
 end
 
-%% Detect outliers
+%% Set upper and lower cutoff
 switch(method)
     case 'sd'
         all_mean    = mean(matrix,1);
         all_SD      = std(matrix,[],1);
-        cut_off_U   = all_mean + threshold*all_SD;
-        cut_off_L   = all_mean - threshold*all_SD;
-        location    = bsxfun(@gt, matrix, cut_off_U) | bsxfun(@lt, matrix, cut_off_L);
-        
+        cutoff_U    = all_mean + threshold*all_SD;
+        cutoff_L    = all_mean - threshold*all_SD;
+
     case 'iqr'
         prctile_U   = prctile(matrix, threshold(2));
         prctile_L   = prctile(matrix, threshold(3));
         all_IQR     = iqr(matrix);
-        location    = bsxfun(@gt, matrix, prctile_U + threshold(1)*all_IQR) | ...
-                      bsxfun(@lt, matrix, prctile_L - threshold(1)*all_IQR);
+        cutoff_U    = prctile_U + threshold(1)*all_IQR;
+        cutoff_L    = prctile_L - threshold(1)*all_IQR;
                 
     case 'mad'
         all_median  = median(matrix,1);
         c           = -1/(sqrt(2)*erfcinv(3/2));
         tmp         = bsxfun(@minus, matrix, all_median);
         MAD         = median(abs(tmp));
-        cut_off_U   = all_median + (threshold*c*MAD);
-        cut_off_L   = all_median - (threshold*c*MAD);
-        location    = bsxfun(@gt, matrix, cut_off_U) | bsxfun(@lt, matrix, cut_off_L);
+        cutoff_U    = all_median + (threshold*c*MAD);
+        cutoff_L    = all_median - (threshold*c*MAD);
         
     case 'percentile'
-        cut_off_U   = prctile(matrix, threshold(1));
-        cut_off_L   = prctile(matrix, threshold(2));
-        location    = bsxfun(@lt, matrix, cut_off_L) | bsxfun(@gt, matrix, cut_off_U);
+        cutoff_U    = prctile(matrix, threshold(1));
+        cutoff_L    = prctile(matrix, threshold(2));
 end
+
+%% Mark outliers
+location_U  = bsxfun(@gt, matrix, cutoff_U);
+location_L  = bsxfun(@lt, matrix, cutoff_L);
+location    = location_U | location_L;
