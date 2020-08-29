@@ -10,6 +10,7 @@ function agg_ranks = aggregate_rank(rank_matrix,  agg_method, ...
 %                       * 'min'
 %                       * 'mean'
 %                       * 'median'
+%                       * 'minvar'
 % prenormalize:     true or false indicating if ranks in rank_matrix should
 %                   be normalized by number of features before aggregation
 % break_ties:       method for breaking ties in ranks; should be one of:
@@ -33,7 +34,12 @@ function agg_ranks = aggregate_rank(rank_matrix,  agg_method, ...
 %                   in ascending order to determine its aggregate rank
 % median:           the median rank of a feature is calculated and sorted
 %                   in ascending order to determine its aggregate rank
-%
+% minvar:           variance is calculated across ranking methods and the
+%                   features are sorted in the order of minimum variance
+%                   i.e. the feature whose rank shows the least variation
+%                   is put on the top (assuming it would be the most stable
+%                   feature)
+% 
 % Prenormalization divides the rank matrix (per column) by the total number
 % of features (thereby scaling it between 1/num_features to 1) before
 % performing ranking
@@ -76,7 +82,7 @@ if ~exist('agg_method', 'var') || isempty(agg_method)
     agg_method = 'median';
 else
     agg_method = lower(agg_method);
-    if ~ismember(agg_method, {'min'; 'mean'; 'median'})
+    if ~ismember(agg_method, {'min'; 'mean'; 'median'; 'minvar'})
         error(['Incorrect agg_method specified: ', agg_method]);
     end
 end
@@ -115,6 +121,9 @@ switch agg_method
         
     case 'median'
         to_work = median(rank_matrix, 2);
+        
+    case 'minvar'
+        to_work = var(rank_matrix, [], 2);
 end
 [~, agg_ranks] = sort(to_work, 'ascend');
 
