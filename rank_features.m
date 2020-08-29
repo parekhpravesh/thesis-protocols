@@ -153,6 +153,7 @@ end
 if ~exist('rank_method', 'var') || isempty(rank_method)
     rank_method = 'relieff';
 else
+    rank_method = lower(rank_method);
     if ~ismember(rank_method, {'tstats'; 'wilcoxon'; 'bhattacharyya'; 'relieff'; 'mrmr'; 'dmean'; 'dmedian'; 'dstd'})
         error('Incorrect rank_method specified');
     end
